@@ -156,3 +156,15 @@ a:hover {
     -webkit-transform: scale(1.5);
     transform: scale(1.5); 
 }
+
+.to-profile {
+    width: 150px;
+    background-color: black;
+    color: aliceblue;
+    font-weight: bold;
+}
+
+.to-profile:hover {
+    background-color: rgb(10, 113, 230);
+    color: black;
+}
