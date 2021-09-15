@@ -44,9 +44,6 @@ section, footer {
 
 .logo-exp {
     width:  150px;
-    border-radius: 50%;
-    border-style: solid;
-    border-color: black;
 }
 
 html {
@@ -111,6 +108,17 @@ body {
 .nav-item {
     font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
     font-size: large;
+    text-transform: uppercase;
+}
+
+.menu {
+    background-image: url(images/bg-nav.png);
+    border-bottom: 8px;
+    border-top: 0px;
+    border-left: 0px;
+    border-right: 0px;
+    border-color: navy;
+    border-style: solid;
 }
 
 h1, h2, h3, h4, h5, h6 {
@@ -129,4 +137,22 @@ p {
 .list-group-item {
     font-family: serif;
     font-size: large;
+}
+
+a {
+    color: black;
+}
+
+a:hover {
+    text-decoration: none;
+}
+
+.zoom {
+    transition: transform .5s;
+}
+
+.zoom:hover {
+    -ms-transform: scale(1.5);
+    -webkit-transform: scale(1.5);
+    transform: scale(1.5); 
 }
