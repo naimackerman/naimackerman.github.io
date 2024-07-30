@@ -35,16 +35,17 @@
       src="https://kit.fontawesome.com/7c1b58181d.js"
       crossorigin="anonymous"
     ></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
     <script src="script.js"></script>
     <title>Nur Ahmad Khatim</title>
   </head>
   <body>
     <header>
       <nav
-        class="navbar navbar-expand-lg navbar-dark bg-dark justify-content-center fixed-top menu"
+        class="navbar navbar-expand-lg justify-content-center fixed-top menu"
       >
         <button
-          class="navbar-toggler"
+          class="navbar-toggler font-weight-bold"
           type="button"
           data-toggle="collapse"
           data-target="#navbarNavAltMarkup"
@@ -52,17 +53,36 @@
           aria-expanded="false"
           aria-label="Toggle navigation"
         >
-          <span class="navbar-toggler-icon"></span>
+          MENU
         </button>
         <div
           class="collapse navbar-collapse justify-content-center"
           id="navbarNavAltMarkup"
         >
           <div class="navbar-nav font-weight-bold">
-            <a class="nav-item nav-link" href="#aboutme">About Me</a>
-            <a class="nav-item nav-link" href="#education">Education</a>
-            <a class="nav-item nav-link" href="#experience">Experience</a>
-            <a class="nav-item nav-link" href="#contact">Contact</a>
+            <a class="nav-item nav-link pr-4 pl-4 animated-background" href="#"
+              >Home</a
+            >
+            <a
+              class="nav-item nav-link pr-4 pl-4 animated-background"
+              href="#aboutme"
+              >About Me</a
+            >
+            <a
+              class="nav-item nav-link pr-4 pl-4 animated-background"
+              href="#education"
+              >Education</a
+            >
+            <a
+              class="nav-item nav-link pr-4 pl-4 animated-background"
+              href="#experience"
+              >Experience</a
+            >
+            <a
+              class="nav-item nav-link pr-4 pl-4 animated-background"
+              href="#contact"
+              >Contact</a
+            >
           </div>
         </div>
       </nav>
@@ -75,12 +95,12 @@
         <div class="container">
           <div class="row align-items-center center">
             <div class="col">
-              <h1 class="display-4">Nur Ahmad Khatim</h1>
+              <h1 class="">Nur Ahmad Khatim</h1>
               <h2><span class="nick">Naim</span></h2>
             </div>
             <div class="col">
               <img
-                src="./images/foto-naim.png"
+                src="./images/foto-naim-3.png"
                 class="rounded float-right"
                 alt=""
               />
@@ -94,24 +114,31 @@
           <div class="row data align-items-center point">
             <div class="col">
               <img
-                src="./images/foto-naim-2.png"
+                width="50%"
+                src="./images/foto-naim-4.png"
                 class="rounded float-left"
                 alt=""
               />
             </div>
             <div class="col">
               <p class="text-justify">
-                Hello, I am Nur Ahmad Khatim, my nickname is Naim. Now I am a
-                5th semester student in the Department of Informatics
-                Engineering, Institute of Technology Sepuluh Nopember Surabaya.
-                I am interested in learning software development and competitive
-                programming. In addition, I am also happy to take part in
-                management training at ITS such as LKMM as a provision in
-                running organizations and committees.
+                Enthusiastic and highly motivated Informatics Engineering
+                student with exceptional problem-solving skills, seeking new
+                challenges in software engineering and Artificial Intelligence
+                research.
               </p>
-              <a href="https://naimackerman.github.io/my-profile"
-                ><button type="button" class="to-profile">My Profile</button></a
-              >
+              <div id="pdfModal" class="modal">
+                <div class="modal-content">
+                  <span class="close">&times;</span>
+                  <iframe
+                    src="CV-Nur Ahmad Khatim.pdf"
+                    class="pdf-viewer"
+                  ></iframe>
+                </div>
+              </div>
+              <button type="button" id="openModal" class="to-profile">
+                My CV
+              </button>
             </div>
           </div>
         </div>
@@ -135,10 +162,10 @@
                 </div>
                 <div class="col-9">
                   <h4 class="label">
-                    Institute of Technology Sepuluh Nopember
+                    Sepuluh Nopember Institute of Technology
                   </h4>
                   <p class="label">
-                    Bachelor Degree of Informatics Engineering 2019 - Present
+                    Bachelor Degree of Informatics Engineering 2019 - 2023
                   </p>
                 </div>
               </div>
@@ -169,69 +196,9 @@
       <section id="experience">
         <div class="container">
           <h1 class="text-center subject">My Experience</h1>
-          <div class="col text-center">
-            <div class="row text-center align-items-center">
-              <div class="rounded mx-auto d-block">
-                <a
-                  href="https://schematics.its.ac.id/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  ><img
-                    src="./images/logo-sch.png"
-                    class="logo-exp rounded mx-auto d-block zoom"
-                    alt=""
-                /></a>
-              </div>
-              <div class="rounded mx-auto d-block">
-                <a
-                  href="https://arek.its.ac.id/hmtc/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  ><img
-                    src="./images/logo-hmtc.jpg"
-                    class="logo-exp rounded mx-auto d-block zoom"
-                    style="width: 125px"
-                    alt=""
-                /></a>
-              </div>
-              <div class="rounded mx-auto d-block">
-                <a
-                  href="https://www.instagram.com/kmi_its/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  ><img
-                    src="./images/logo-kmi.png"
-                    class="logo-exp rounded mx-auto d-block zoom"
-                    alt=""
-                /></a>
-              </div>
-              <div class="rounded mx-auto d-block">
-                <a
-                  href="https://www.instagram.com/jmmiits/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  ><img
-                    src="./images/logo-jmmi.jpg"
-                    class="logo-exp rounded mx-auto d-block zoom"
-                    alt=""
-                /></a>
-              </div>
-              <div class="rounded mx-auto d-block">
-                <a
-                  href="https://www.instagram.com/ramadhanits/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  ><img
-                    src="./images/logo-rdk.jpg"
-                    class="logo-exp rounded mx-auto d-block zoom"
-                    alt=""
-                /></a>
-              </div>
-            </div>
-          </div>
-          <br />
-          <div class="list-group mt-4">
+          <div class="list-group mt-4 point-no-pad">
             <div class="accordion" id="accordionExample">
+              <!-- Accordion Item 1 -->
               <div class="card">
                 <div class="card-header" id="headingOne">
                   <button
@@ -242,7 +209,16 @@
                     aria-expanded="false"
                     aria-controls="collapseOne"
                   >
-                    Expert Staff of Schematics NPC 2021
+                    <div class="d-flex align-items-center">
+                      <img
+                        src="./images/logo-hmtc.jpg"
+                        class="list-item-image"
+                        alt="Example 1"
+                      />
+                      <span class="ml-3"
+                        >Expert Staff of Schematics NPC 2021</span
+                      >
+                    </div>
                   </button>
                 </div>
                 <div
@@ -254,6 +230,7 @@
                   <div class="card-body">Description</div>
                 </div>
               </div>
+              <!-- Accordion Item 2 -->
               <div class="card">
                 <div class="card-header" id="headingTwo">
                   <button
@@ -264,7 +241,16 @@
                     aria-expanded="false"
                     aria-controls="collapseTwo"
                   >
-                    Staff of Department KDPM HMTC "Progresif"
+                    <div class="d-flex align-items-center">
+                      <img
+                        src="./images/logo-hmtc.jpg"
+                        class="list-item-image"
+                        alt="Example 2"
+                      />
+                      <span class="ml-3"
+                        >Staff of Department KDPM HMTC "Progresif"</span
+                      >
+                    </div>
                   </button>
                 </div>
                 <div
@@ -276,6 +262,7 @@
                   <div class="card-body">Description</div>
                 </div>
               </div>
+              <!-- Accordion Item 3 -->
               <div class="card">
                 <div class="card-header" id="headingThree">
                   <button
@@ -286,7 +273,16 @@
                     aria-expanded="false"
                     aria-controls="collapseThree"
                   >
-                    Staff of Department Kaderisasi KMI "Harmonisasi"
+                    <div class="d-flex align-items-center">
+                      <img
+                        src="./images/logo-hmtc.jpg"
+                        class="list-item-image"
+                        alt="Example 3"
+                      />
+                      <span class="ml-3"
+                        >Staff of Department Kaderisasi KMI "Harmonisasi"</span
+                      >
+                    </div>
                   </button>
                 </div>
                 <div
@@ -298,6 +294,7 @@
                   <div class="card-body">Description</div>
                 </div>
               </div>
+              <!-- Accordion Item 4 -->
               <div class="card">
                 <div class="card-header" id="headingFour">
                   <button
@@ -308,7 +305,16 @@
                     aria-expanded="false"
                     aria-controls="collapseFour"
                   >
-                    Staff of Department Kaderisasi JMMI ITS "GRADASI"
+                    <div class="d-flex align-items-center">
+                      <img
+                        src="./images/logo-hmtc.jpg"
+                        class="list-item-image"
+                        alt="Example 4"
+                      />
+                      <span class="ml-3"
+                        >Staff of Department Kaderisasi JMMI ITS "GRADASI"</span
+                      >
+                    </div>
                   </button>
                 </div>
                 <div
@@ -320,6 +326,7 @@
                   <div class="card-body">Description</div>
                 </div>
               </div>
+              <!-- Accordion Item 5 -->
               <div class="card">
                 <div class="card-header" id="headingFive">
                   <button
@@ -330,7 +337,16 @@
                     aria-expanded="false"
                     aria-controls="collapseFive"
                   >
-                    Organizing Committee of Kajian RDK41 ITS
+                    <div class="d-flex align-items-center">
+                      <img
+                        src="./images/logo-hmtc.jpg"
+                        class="list-item-image"
+                        alt="Example 5"
+                      />
+                      <span class="ml-3"
+                        >Organizing Committee of Kajian RDK41 ITS</span
+                      >
+                    </div>
                   </button>
                 </div>
                 <div
@@ -342,6 +358,7 @@
                   <div class="card-body">Description</div>
                 </div>
               </div>
+              <!-- Accordion Item 6 -->
               <div class="card">
                 <div class="card-header" id="headingSix">
                   <button
@@ -352,7 +369,16 @@
                     aria-expanded="false"
                     aria-controls="collapseSix"
                   >
-                    General Election Committee of KPU HMTC 2021
+                    <div class="d-flex align-items-center">
+                      <img
+                        src="./images/logo-hmtc.jpg"
+                        class="list-item-image"
+                        alt="Example 6"
+                      />
+                      <span class="ml-3"
+                        >General Election Committee of KPU HMTC 2021</span
+                      >
+                    </div>
                   </button>
                 </div>
                 <div
@@ -364,6 +390,7 @@
                   <div class="card-body">Description</div>
                 </div>
               </div>
+              <!-- Accordion Item 7 -->
               <div class="card">
                 <div class="card-header" id="headingSeven">
                   <button
@@ -374,7 +401,16 @@
                     aria-expanded="false"
                     aria-controls="collapseSeven"
                   >
-                    Data Center of LKMM Pra-TD I FTEIC 2021
+                    <div class="d-flex align-items-center">
+                      <img
+                        src="./images/logo-hmtc.jpg"
+                        class="list-item-image"
+                        alt="Example 7"
+                      />
+                      <span class="ml-3"
+                        >Data Center of LKMM Pra-TD I FTEIC 2021</span
+                      >
+                    </div>
                   </button>
                 </div>
                 <div
@@ -386,6 +422,7 @@
                   <div class="card-body">Description</div>
                 </div>
               </div>
+              <!-- Accordion Item 8 -->
               <div class="card">
                 <div class="card-header" id="headingEight">
                   <button
@@ -396,7 +433,16 @@
                     aria-expanded="false"
                     aria-controls="collapseEight"
                   >
-                    Teaching Assistant of Data Structure Course 2021
+                    <div class="d-flex align-items-center">
+                      <img
+                        src="./images/logo-hmtc.jpg"
+                        class="list-item-image"
+                        alt="Example 8"
+                      />
+                      <span class="ml-3"
+                        >Teaching Assistant of Data Structure Course 2021</span
+                      >
+                    </div>
                   </button>
                 </div>
                 <div
