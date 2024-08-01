@@ -72,3 +72,25 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   };
 });
+
+document.addEventListener("DOMContentLoaded", function () {
+  var modal = document.getElementById("imagePreviewModal");
+  if (modal) {
+    modal.classList.add("hidden");
+  }
+});
+
+function openImagePreview(img) {
+  var modal = document.getElementById("imagePreviewModal");
+  var modalImg = document.getElementById("imagePreview");
+  var captionText = document.getElementById("imageCaption");
+
+  modal.classList.remove("hidden");
+  modalImg.src = img.src;
+  captionText.innerHTML = img.alt;
+}
+
+function closeImagePreview() {
+  var modal = document.getElementById("imagePreviewModal");
+  modal.classList.add("hidden");
+}
