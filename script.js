@@ -26,25 +26,32 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 });
 
-$(document).ready(function () {
-  $('.navbar-nav a[href*="#"]').on('click', function (event) {
+$('a[href*="#"]')
+  .not('[href="#"]')
+  .not('[href="#0"]')
+  .click(function (event) {
     var target = $(this.hash);
+    target = target.length ? target : $("[name=" + this.hash.slice(1) + "]");
     if (target.length) {
       event.preventDefault();
-
-      var headerOffset = -50;
-      var targetOffset = target.offset().top - headerOffset;
-
-      $('html, body').animate(
+      $("html, body").animate(
         {
-          scrollTop: targetOffset
+          scrollTop: target.offset().top,
         },
-        100
+        1000,
+        function () {
+          var $target = $(target);
+          $target.focus();
+          if ($target.is(":focus")) {
+            return false;
+          } else {
+            $target.attr("tabindex", "-1");
+            $target.focus();
+          }
+        }
       );
     }
   });
-});
-
 
 document.addEventListener("DOMContentLoaded", function () {
   var modal = document.getElementById("pdfModal");
