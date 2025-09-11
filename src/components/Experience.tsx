@@ -32,7 +32,7 @@ const organizations = [
     logo: "/images/logo-sisl.png",
     positions: [
       {
-        title: "Machine Learning Engineer",
+        title: "Research Assistant",
         dates: "Oct 2023 - Jan 2024",
         description:
           'Co-authored a paper on "Toward an Integrated Decision-Making Framework for Optimized Stroke Diagnosis with DSA and Treatment under Uncertainty" securing research funding and acceptance at IMIP 2024 conference in Bali.',
