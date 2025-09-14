@@ -367,10 +367,10 @@ export function Experience() {
                 <div className="text-center">
                   <Building className="w-12 h-12 text-gray-500 mx-auto mb-4" />
                   <p className="text-gray-400 text-lg">
-                    Select an organization to view detailed experience
+                    Select an item to view detailed experience
                   </p>
                   <p className="text-gray-500 text-sm mt-2">
-                    Click on any organization from the list to explore positions
+                    Click on any item from the list to explore positions
                     and timeline
                   </p>
                 </div>
