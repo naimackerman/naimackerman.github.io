@@ -3,7 +3,7 @@ import { BookCtx, DoodleArrow, Fn, Page, PhotoFig, Stamp, Whisper } from "./Book
 
 // Chapters: cover, intro, building (interactive), researching.
 
-const { useState: useStateF, useContext: useCtxF } = React;
+const { useContext: useCtxF } = React;
 
 function getJapanSeasonEdition() {
   const tokyoParts = new Intl.DateTimeFormat("en-US", {
@@ -259,7 +259,9 @@ const WORK = [
 const TYPE_LABEL = { work: "industry", research: "research", teach: "teaching", study: "study", volunteer: "volunteer" };
 
 function BuildingSpread() {
-  const [sel, setSel] = useStateF("dataon");
+  const { spreadData, updateSpreadData } = useCtxF(BookCtx);
+  const sel = spreadData.selectedWork || "dataon";
+  const setSel = (id) => updateSpreadData({ selectedWork: id });
   const org = WORK.find(w => w.id === sel);
 
   return (

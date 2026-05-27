@@ -115,7 +115,7 @@ export function Stamp({ children, rotate = -3, round = false, ink = false, green
 
 // ─── Spread renderer with its own context ───────────────────────────────────
 
-function SpreadFor({ sp, idx, goto }) {
+function SpreadFor({ sp, idx, goto, spreadState, updateSpreadState }) {
   const Comp = sp.Component;
   const ctxValue = {
     leftNum: idx * 2 + 1,
@@ -124,7 +124,9 @@ function SpreadFor({ sp, idx, goto }) {
     runLeft: sp.chapter.runLeft,
     runRight: sp.chapter.runRight,
     chapter: sp.chapter,
-    goto
+    goto,
+    spreadData: spreadState[sp.key] || {},
+    updateSpreadData: (updates) => updateSpreadState(sp.key, updates),
   };
   return (
     <BookCtx.Provider value={ctxValue}>
@@ -163,6 +165,13 @@ function useIsMobile() {
 export function Book({ chapters }) {
   const flat = useFlat(chapters);
   const isMobile = useIsMobile();
+  const [spreadState, setSpreadState] = useState({});
+  const updateSpreadState = useCallback((key, updates) => {
+    setSpreadState((state) => ({
+      ...state,
+      [key]: { ...(state[key] || {}), ...updates },
+    }));
+  }, []);
 
   const [idx, setIdx] = useState(() => {
     const hash = window.location.hash.slice(1);
@@ -297,7 +306,9 @@ export function Book({ chapters }) {
         next={next} prev={prev} goto={goto}
         canNext={canNext} canPrev={canPrev}
         chapters={chapters} flat={flat}
-        wrapRef={wrapRef} />);
+        wrapRef={wrapRef}
+        spreadState={spreadState}
+        updateSpreadState={updateSpreadState} />);
 
 
   }
@@ -312,7 +323,7 @@ export function Book({ chapters }) {
       <div className="spread-wrap" ref={wrapRef}>
         {/* BASE: shows target during flip, else current */}
         <div className={"spread base " + (flip ? `flipping-${flip.dir}` : "")}>
-          <SpreadFor sp={flip ? tgt : cur} idx={flip ? flip.idx : idx} goto={goto} />
+          <SpreadFor sp={flip ? tgt : cur} idx={flip ? flip.idx : idx} goto={goto} spreadState={spreadState} updateSpreadState={updateSpreadState} />
         </div>
 
         {/* Spine shadow centered */}
@@ -323,7 +334,7 @@ export function Book({ chapters }) {
             {/* The still-visible half of the CURRENT spread */}
             <div className={`cover-side cover-${flip.dir === "next" ? "left" : "right"}`}>
               <div className="spread">
-                <SpreadFor sp={cur} idx={idx} goto={goto} />
+                <SpreadFor sp={cur} idx={idx} goto={goto} spreadState={spreadState} updateSpreadState={updateSpreadState} />
               </div>
             </div>
 
@@ -331,12 +342,12 @@ export function Book({ chapters }) {
             <div className={`flip-leaf dir-${flip.dir}`}>
               <div className="leaf-face front">
                 <div className="spread">
-                  <SpreadFor sp={cur} idx={idx} goto={goto} />
+                  <SpreadFor sp={cur} idx={idx} goto={goto} spreadState={spreadState} updateSpreadState={updateSpreadState} />
                 </div>
               </div>
               <div className="leaf-face back">
                 <div className="spread">
-                  <SpreadFor sp={tgt} idx={flip.idx} goto={goto} />
+                  <SpreadFor sp={tgt} idx={flip.idx} goto={goto} spreadState={spreadState} updateSpreadState={updateSpreadState} />
                 </div>
               </div>
             </div>
@@ -360,7 +371,7 @@ export function Book({ chapters }) {
 
 // ─── Mobile book — single page, slide-in transitions ────────────────────────
 
-function MobileBook({ cur, idx, mPage, next, prev, goto, canNext, canPrev, flat, wrapRef }) {
+function MobileBook({ cur, idx, mPage, next, prev, goto, canNext, canPrev, flat, wrapRef, spreadState, updateSpreadState }) {
   const ch = cur.chapter;
 
   // For the slide animation, track key change
@@ -387,7 +398,7 @@ function MobileBook({ cur, idx, mPage, next, prev, goto, canNext, canPrev, flat,
       <div className="spread-wrap mobile" ref={wrapRef}>
         <div key={slideKey} className={"mobile-page slide-" + slideDir}>
           <div className="spread mobile-spread" data-show={mPage}>
-            <SpreadFor sp={cur} idx={idx} goto={goto} />
+            <SpreadFor sp={cur} idx={idx} goto={goto} spreadState={spreadState} updateSpreadState={updateSpreadState} />
           </div>
           <div className="spine-shadow mobile-shadow" />
         </div>
