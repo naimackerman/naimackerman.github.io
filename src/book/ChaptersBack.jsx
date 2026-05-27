@@ -1,5 +1,5 @@
 import React from "react";
-import { Fn, Page, Stamp, Whisper } from "./Book";
+import { DoodleArrow, Fn, Page, Stamp, Whisper } from "./Book";
 
 // Chapters: teaching, awards, now, marginalia, correspondence.
 
@@ -75,7 +75,7 @@ function TeachingSpread() {
 
         <div style={{ marginTop: "auto", display: "flex", justifyContent: "space-between", alignItems: "baseline", paddingTop: 14 }}>
           <Stamp rotate={-2} green>still mentoring</Stamp>
-          <span className="hand" style={{ fontSize: 22, color: "var(--ink-soft)" }}>↘ awards next</span>
+          <span className="hand" style={{ fontSize: 22, color: "var(--ink-soft)" }}><DoodleArrow direction="downRight" /> awards next</span>
         </div>
       </Page>
     </>
@@ -124,7 +124,7 @@ function AwardsSpread() {
             International Meeting on Medical Network (IMMaN), 2024 · online
           </div>
           <div className="hand" style={{ fontSize: 20, color: "var(--ink-soft)", marginTop: 6 }}>
-            ↪ for our LLM ePuskesmas paper. I'm still surprised.
+            <DoodleArrow /> for our LLM ePuskesmas paper. I'm still surprised.
           </div>
         </div>
 
@@ -148,7 +148,7 @@ function AwardsSpread() {
                 <div>
                   <div style={{ fontFamily: "'Newsreader', serif", fontSize: 14, fontWeight: a.featured ? 600 : 400, color: "var(--ink)" }}>{a.title}</div>
                   <div style={{ fontFamily: "'Newsreader', serif", fontSize: 12, color: "var(--ink-soft)", fontStyle: "italic" }}>{a.org}</div>
-                  {a.note && <div className="hand" style={{ fontSize: 16, color: "var(--accent)" }}>↪ {a.note}</div>}
+                  {a.note && <div className="hand" style={{ fontSize: 16, color: "var(--accent)" }}><DoodleArrow /> {a.note}</div>}
                 </div>
                 <span className="mono" style={{ fontSize: 10, color: "var(--mute)" }}>{a.year}</span>
               </li>
@@ -203,7 +203,7 @@ function NowSpread() {
               <div style={{ height: 5, background: "rgba(0,0,0,0.08)", borderRadius: 4, marginTop: 4, overflow: "hidden" }}>
                 <div style={{ width: `${b.pct}%`, height: "100%", background: "var(--accent)" }} />
               </div>
-              <div className="hand" style={{ fontSize: 16, color: "var(--ink-soft)" }}>↪ {b.note}</div>
+              <div className="hand" style={{ fontSize: 16, color: "var(--ink-soft)" }}><DoodleArrow /> {b.note}</div>
             </li>
           ))}
         </ul>
@@ -213,7 +213,7 @@ function NowSpread() {
           {PAPERS_NOW.map((p, i) => (
             <li key={i} style={{ padding: "4px 0", borderBottom: "1px dotted rgba(0,0,0,0.18)" }}>
               <strong style={{ fontFamily: "'Newsreader', serif" }}>{p.t}</strong>
-              <span className="hand" style={{ fontSize: 16, color: "var(--ink-soft)", marginLeft: 6 }}>↪ {p.note}</span>
+              <span className="hand" style={{ fontSize: 16, color: "var(--ink-soft)", marginLeft: 6 }}><DoodleArrow /> {p.note}</span>
             </li>
           ))}
         </ul>
@@ -245,11 +245,11 @@ function NowSpread() {
             <strong>Vitamin String Quartet</strong>
             <small>listen on Spotify</small>
           </span>
-          <span className="spotify-arrow" aria-hidden="true">↗</span>
+          <DoodleArrow direction="external" className="spotify-arrow" />
         </a>
 
         <div className="hand" style={{ fontSize: 18, color: "var(--ink-soft)", marginBottom: 10 }}>
-          ↪ also in heavy rotation:
+          <DoodleArrow /> also in heavy rotation:
         </div>
         <ol style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 6 }}>
           {LISTENING.map(([track, why], i) => (
@@ -272,7 +272,7 @@ function NowSpread() {
             <div key={i} className="gh-card" style={{ transform: `rotate(${(i % 2 ? 0.4 : -0.5)}deg)`, padding: "8px 12px" }}>
               <div style={{ fontFamily: "'Newsreader', serif", fontSize: 13 }}><strong>{t}</strong></div>
               <div className="mono" style={{ fontSize: 10, color: "var(--mute)" }}>{stack}</div>
-              <div className="hand" style={{ fontSize: 15, color: "var(--ink-soft)" }}>↪ {what}</div>
+              <div className="hand" style={{ fontSize: 15, color: "var(--ink-soft)" }}><DoodleArrow /> {what}</div>
             </div>
           ))}
         </div>
@@ -395,7 +395,7 @@ function GuestbookForm({ onSign }) {
       <textarea className="field" placeholder="a short message…" rows={2} value={msg} onChange={e => setMsg(e.target.value)} />
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
         <span className="hand" style={{ fontSize: 16, color: done ? "var(--accent)" : "var(--ink-soft)" }}>
-          {done ? "✓ signed. thank you." : "↗ stored locally · never sent anywhere."}
+          {done ? "✓ signed. thank you." : <><DoodleArrow direction="external" /> stored locally · never sent anywhere.</>}
         </span>
         <button className="btn-ink" type="submit" disabled={!name.trim() || !msg.trim()}>sign</button>
       </div>
@@ -516,7 +516,7 @@ function ContactForm() {
 
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, marginTop: 2 }}>
         <span className="hand" style={{ fontSize: 16, color: done ? "var(--accent)" : err ? "#a13a2a" : "var(--ink-soft)" }}>
-          {done ? "✓ sent. I'll reply within 48h." : err || (submitting ? "sending…" : "↗ powered by cloudflare turnstile.")}
+          {done ? "✓ sent. I'll reply within 48h." : err || (submitting ? "sending…" : <><DoodleArrow direction="external" /> powered by cloudflare turnstile.</>)}
         </span>
         <button className="btn-ink" type="submit" disabled={!canSubmit}>{submitting ? "sending…" : "send"}</button>
       </div>
@@ -610,7 +610,7 @@ function CorrespondenceSpread() {
                   <div className="social-name">{k}</div>
                   <div className="social-handle">{h}</div>
                 </span>
-                <span className="social-arrow">↗</span>
+                <DoodleArrow direction="external" className="social-arrow" />
               </a>
             ))}
           </div>

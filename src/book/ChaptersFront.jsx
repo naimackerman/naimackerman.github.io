@@ -1,5 +1,5 @@
 import React from "react";
-import { BookCtx, Fn, Page, PhotoFig, Stamp, Whisper } from "./Book";
+import { BookCtx, DoodleArrow, Fn, Page, PhotoFig, Stamp, Whisper } from "./Book";
 
 // Chapters: cover, intro, building (interactive), researching.
 
@@ -446,7 +446,7 @@ function ResearchingSpread() {
                   <span className="mono" style={{ fontSize: 10, color: "var(--mute)" }}>{p.venue} · {p.where}</span>
                   <span className="mono" style={{ fontSize: 10, color: p.cites > 0 ? "var(--accent)" : "var(--mute)" }}>{p.cites} cite{p.cites === 1 ? "" : "s"}</span>
                 </div>
-                <div className="hand" style={{ fontSize: 16, color: "var(--ink-soft)", marginTop: 1 }}>↪ {p.note}</div>
+                <div className="hand" style={{ fontSize: 16, color: "var(--ink-soft)", marginTop: 1 }}><DoodleArrow /> {p.note}</div>
               </li>
             ))}
           </ol>

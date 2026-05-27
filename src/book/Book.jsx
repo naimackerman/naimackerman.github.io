@@ -41,6 +41,25 @@ export function Page({ side, num, chapterTitle, runLeft, runRight, children, foo
 }
 
 export function Fn({ n }) {return <sup className="fn" data-fn={n}>{n}</sup>;}
+export function DoodleArrow({ direction = "note", className = "" }) {
+  const path = {
+    note: <path d="M3 4v3a6 6 0 0 0 6 6h8 M13 9l4 4-4 4" />,
+    external: <path d="M5 15L15 5 M8 5h7v7" />,
+    downRight: <path d="M5 5l10 10 M8 15h7V8" />,
+  }[direction];
+
+  return (
+    <svg
+      className={`doodle-arrow doodle-arrow-${direction} ${className}`.trim()}
+      viewBox="0 0 20 20"
+      aria-hidden="true"
+      focusable="false"
+    >
+      {path}
+    </svg>
+  );
+}
+
 export function Whisper({ children, say }) {
   const bubbleRef = useRef(null);
   const [offset, setOffset] = useState(0);

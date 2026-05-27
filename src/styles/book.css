@@ -199,6 +199,19 @@ body { font-family: 'Newsreader', 'Source Serif 4', Georgia, serif; }
 /* ───────────────────── Type ───────────────────── */
 .display  { font-family: 'Newsreader', serif; font-weight: 600; letter-spacing: -0.015em; line-height: 0.98; }
 .hand     { font-family: 'Caveat', cursive; }
+.doodle-arrow {
+  display: inline-block;
+  width: 0.9em;
+  height: 0.9em;
+  overflow: visible;
+  vertical-align: -0.08em;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  flex-shrink: 0;
+}
 .mono     { font-family: 'Special Elite', monospace; }
 .smallcaps{ text-transform: uppercase; letter-spacing: 0.22em; font-size: 0.72rem; }
 
