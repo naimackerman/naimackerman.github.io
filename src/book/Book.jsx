@@ -317,7 +317,7 @@ export function Book({ chapters }) {
     <div className="book-app">
       <div className="topbar">
         <span>NURAHMADKHATIM.GITHUB.IO · <a href="#cover-0" onClick={(e) => {e.preventDefault();goto("cover");}}>cover</a> · <a href="#correspondence-0" onClick={(e) => {e.preventDefault();goto("correspondence");}}>say hi</a></span>
-        <span>{ch.id !== "cover" ? `${ch.roman}. ${ch.title}` : "—"} &nbsp;·&nbsp; spread {idx + 1} of {flat.length} &nbsp;·&nbsp; <span className="kbd">←</span> <span className="kbd">→</span> &nbsp;or swipe</span>
+        <span>{ch.id !== "cover" ? ch.roman : "—"} &nbsp;·&nbsp; spread {idx + 1} of {flat.length} &nbsp;·&nbsp; <span className="kbd">←</span> <span className="kbd">→</span> &nbsp;or swipe</span>
       </div>
 
       <div className="spread-wrap" ref={wrapRef}>
@@ -391,8 +391,8 @@ function MobileBook({ cur, idx, mPage, next, prev, goto, canNext, canPrev, flat,
   return (
     <div className="book-app">
       <div className="topbar">
-        <span>NURAHMADKHATIM.GITHUB.IO</span>
-        <span>{ch.id !== "cover" ? `${ch.roman}. ${ch.title}` : "—"} &nbsp;·&nbsp; {idx + 1}/{flat.length} · {mPage}</span>
+        <span><a href="#cover-0" onClick={(e) => {e.preventDefault();goto("cover");}}>cover</a> · <a href="#correspondence-0" onClick={(e) => {e.preventDefault();goto("correspondence");}}>say hi</a></span>
+        <span>{ch.id !== "cover" ? ch.roman : "—"} &nbsp;·&nbsp; {idx + 1}/{flat.length} · {mPage}</span>
       </div>
 
       <div className="spread-wrap mobile" ref={wrapRef}>

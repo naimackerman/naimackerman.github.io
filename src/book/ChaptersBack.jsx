@@ -4,6 +4,7 @@ import { DoodleArrow, Fn, Page, Stamp, Whisper } from "./Book";
 // Chapters: teaching, awards, now, marginalia, correspondence.
 
 const { useState: useStateB, useEffect: useEffB, useRef: useRefB } = React;
+const cvUrl = new URL("../../CV-Nur Ahmad Khatim.pdf", import.meta.url).href;
 
 // ════════════════════════════════════════════════════════════════════════════
 // IV · ON TEACHING
@@ -320,6 +321,20 @@ function MarginaliaSpread() {
           maybe a touch over-typeset<Fn n={2} />. There's a guestbook on the last page.
           I'd love to know you stopped by.
         </p>
+
+        <div className="cv-slip">
+          <div>
+            <div className="smallcaps">full cv</div>
+            <div className="cv-slip-title">The formal version lives here.</div>
+            <div className="hand cv-slip-note">
+              <DoodleArrow /> for recruiters, collaborators, and anyone who needs the PDF.
+            </div>
+          </div>
+          <div className="cv-actions" aria-label="Full CV links">
+            <a className="btn-ink" href={cvUrl} target="_blank" rel="noopener noreferrer">view</a>
+            <a className="btn-ink btn-paper" href={cvUrl} download>download</a>
+          </div>
+        </div>
 
         <div style={{ marginTop: 18, paddingLeft: 12, borderLeft: "2px solid var(--accent)" }}>
           <div className="hand" style={{ fontSize: 22, color: "var(--ink-soft)", lineHeight: 1.25 }}>
