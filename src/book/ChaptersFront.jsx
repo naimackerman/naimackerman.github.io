@@ -79,7 +79,10 @@ function CoverSpread() {
           {toc.map(([rn, title, sub, pg, id]) => (
             <li key={id}
                 className="toc-item"
+                role="button"
+                tabIndex={0}
                 onClick={() => ctx.goto(id)}
+                onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); ctx.goto(id); } }}
                 style={{ display: "grid", gridTemplateColumns: "42px 1fr auto", gap: 10, alignItems: "baseline", borderBottom: "1px dotted rgba(0,0,0,0.22)", padding: "8px 12px 8px 8px", cursor: "pointer", borderRadius: 2 }}>
               <span style={{ fontStyle: "italic", color: "var(--mute)" }}>{rn}</span>
               <span>
@@ -124,8 +127,8 @@ function IntroSpread() {
 
         <p className="bodytext">
           I graduated in Informatics Engineering from <em>Sepuluh Nopember Institute of Technology</em> in Surabaya,
-          worked through <Whisper align="left" say="2023–2025 · A Trusted HRIS Partner for Over 20 Years in Southeast Asia">DataOn</Whisper> as, contributed
-          to <Whisper align="left" say="Stanford Intelligent Systems Lab">SISL</Whisper> remotely, 
+          worked at <Whisper align="left" say="2023–2025 · A Trusted HRIS Partner for Over 20 Years in Southeast Asia">DataOn</Whisper>, contributed
+          to <Whisper align="left" say="Stanford Intelligent Systems Lab">SISL</Whisper> remotely,
           and freelanced for <Whisper align="left" say="2022–2023 · suitmedia.com">a digital agency</Whisper> before any of that. Along the way I taught data structures
           and ran trainings for the student association.
         </p>
@@ -279,7 +282,11 @@ function BuildingSpread() {
             {WORK.map(w => (
               <li key={w.id}
                   className="org-card"
+                  role="button"
+                  tabIndex={0}
+                  aria-pressed={sel === w.id}
                   onClick={() => setSel(w.id)}
+                  onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); setSel(w.id); } }}
                   style={{
                     cursor: "pointer",
                     padding: "10px 12px",
@@ -336,12 +343,12 @@ function BuildingSpread() {
 const PUBLICATIONS = [
   {
     title: "Knee-xRAI: An Explainable AI Framework for Automatic Kellgren-Lawrence Grading of Knee Osteoarthritis",
-    authors: "AA Irfan, NA Khatim, AA Irfan, A Zaki, EA Suwarsono, MM Arief",
+    authors: "Azmul A. Irfan, NA Khatim, Alfan A. Irfan, A Zaki, EA Suwarsono, MM Arief",
     venue: "arXiv preprint",
     where: "arXiv:2604.23435",
     year: "2026", cites: 0,
     link: "https://arxiv.org/abs/2604.23435",
-    note: "currently interisting in this research topic.",
+    note: "currently my main research interest.",
     stamp: "new",
   },
   {

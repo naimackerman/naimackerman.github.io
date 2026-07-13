@@ -149,6 +149,17 @@ function useFlat(chapters) {
   }, [chapters]);
 }
 
+function usePrefersReducedMotion() {
+  const [reduced, setReduced] = useState(() => window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+  useEffect(() => {
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const on = () => setReduced(mq.matches);
+    mq.addEventListener("change", on);
+    return () => mq.removeEventListener("change", on);
+  }, []);
+  return reduced;
+}
+
 function useIsMobile() {
   const [m, setM] = useState(() => window.matchMedia("(max-width: 1080px)").matches);
   useEffect(() => {
@@ -165,6 +176,7 @@ function useIsMobile() {
 export function Book({ chapters }) {
   const flat = useFlat(chapters);
   const isMobile = useIsMobile();
+  const reducedMotion = usePrefersReducedMotion();
   const [spreadState, setSpreadState] = useState({});
   const updateSpreadState = useCallback((key, updates) => {
     setSpreadState((state) => ({
@@ -222,8 +234,10 @@ export function Book({ chapters }) {
       if (canNext) {setIdx(idx + 1);setMPage("left");}
       return;
     }
-    if (canNext) setFlip({ idx: idx + 1, dir: "next" });
-  }, [flip, isMobile, mPage, canNext, idx]);
+    if (!canNext) return;
+    if (reducedMotion) {setIdx(idx + 1);setMPage("left");return;}
+    setFlip({ idx: idx + 1, dir: "next" });
+  }, [flip, isMobile, mPage, canNext, idx, reducedMotion]);
 
   const prev = useCallback(() => {
     if (flip) return;
@@ -232,8 +246,10 @@ export function Book({ chapters }) {
       if (canPrev) {setIdx(idx - 1);setMPage("right");}
       return;
     }
-    if (canPrev) setFlip({ idx: idx - 1, dir: "prev" });
-  }, [flip, isMobile, mPage, canPrev, idx]);
+    if (!canPrev) return;
+    if (reducedMotion) {setIdx(idx - 1);setMPage("left");return;}
+    setFlip({ idx: idx - 1, dir: "prev" });
+  }, [flip, isMobile, mPage, canPrev, idx, reducedMotion]);
 
   const goto = useCallback((id) => {
     const i = flat.findIndex((s) => s.chapter.id === id || s.key === id);
@@ -281,7 +297,8 @@ export function Book({ chapters }) {
       const sup = e.target.closest(".fn[data-fn]");
       if (!sup) return;
       const n = sup.dataset.fn;
-      const list = sup.closest(".page")?.querySelector(`.footnotes li:nth-child(${n})`);
+      const scope = sup.closest(".spread") || sup.closest(".page");
+      const list = scope?.querySelector(`.footnotes li:nth-child(${n})`);
       if (list) {
         list.style.transition = "background 0.6s";
         list.style.background = "var(--accent-soft)";

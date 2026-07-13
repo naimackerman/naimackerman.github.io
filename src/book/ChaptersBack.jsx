@@ -56,11 +56,11 @@ function TeachingSpread() {
         <ol style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 14 }}>
           {[
             ["§1", "Show them the broken version first.",
-              "Working code is a magic trick. Broken code is a lesson plan. Make them want the answer before you give it."],
+              <>Working code is a magic trick. Broken code is a lesson plan. Make them want the answer before you give it.</>],
             ["§2", "Pointers are about trust, not stars.",
-              "When a student is stuck on pointers, they're rarely stuck on syntax — they're stuck on what they're allowed to believe about the machine.<Fn n=1 />"],
+              <>When a student is stuck on pointers, they're rarely stuck on syntax — they're stuck on what they're allowed to <em>believe</em> about the machine.<Fn n={1} /></>],
             ["§3", "Lab time is therapy time.",
-              "The best part of teaching wasn't lecturing. It was the 11pm whatsapps where someone finally got it."],
+              <>The best part of teaching wasn't lecturing. It was the 11pm whatsapps where someone finally got it.</>],
           ].map(([k, h, b]) => (
             <li key={k} style={{ paddingLeft: 12, borderLeft: "2px solid var(--accent)" }}>
               <div style={{ display: "flex", gap: 10, alignItems: "baseline" }}>
@@ -68,7 +68,7 @@ function TeachingSpread() {
                 <strong style={{ fontFamily: "'Newsreader', serif", fontSize: 17 }}>{h}</strong>
               </div>
               <div className="bodytext" style={{ fontSize: 14, marginTop: 4, lineHeight: 1.5 }}>
-                {b.includes("<Fn") ? <>When a student is stuck on pointers, they're rarely stuck on syntax — they're stuck on what they're allowed to <em>believe</em> about the machine.<Fn n={1} /></> : b}
+                {b}
               </div>
             </li>
           ))}
@@ -189,7 +189,7 @@ function NowSpread() {
         <h2 className="chapter-title">Currently.</h2>
 
         <p className="bodytext drop-cap">
-          A snapshot. Last tended on <strong>23 May 2026</strong>.
+          A snapshot. Last tended on <strong>13 July 2026</strong>.
           If you're reading this much later than that, ask me what's new — I usually have feelings about it.
         </p>
 
@@ -339,7 +339,7 @@ function MarginaliaSpread() {
         <div style={{ marginTop: 18, paddingLeft: 12, borderLeft: "2px solid var(--accent)" }}>
           <div className="hand" style={{ fontSize: 22, color: "var(--ink-soft)", lineHeight: 1.25 }}>
             — naim<br/>
-            <span style={{ fontSize: 16, color: "var(--mute)" }}>Indonesia, May 2026</span>
+            <span style={{ fontSize: 16, color: "var(--mute)" }}>Indonesia, July 2026</span>
           </div>
         </div>
       </Page>
@@ -386,33 +386,74 @@ function MarginaliaSpread() {
 // ════════════════════════════════════════════════════════════════════════════
 
 const SEED_GUEST = [
-  { name: "andre",   msg: "love the book metaphor. dog-eared, will come back.", date: "23 may '26", color: "var(--accent)" },
-  { name: "haya",    msg: "the stroke paper note made me chuckle. waving from palo alto.", date: "22 may '26" },
-  { name: "mahasiswa anon", msg: "kak, terima kasih sudah jadi TA dulu — i passed!!!", date: "20 may '26" },
+  { name: "naim",   msg: "Hello, world!", date: "15 July 2026", color: "var(--accent)" },
 ];
 
 function GuestbookForm({ onSign }) {
   const [name, setName] = useStateB("");
   const [msg, setMsg]   = useStateB("");
   const [done, setDone] = useStateB(false);
+  const [err, setErr]   = useStateB("");
+  const [submitting, setSubmitting] = useStateB(false);
+  const [token, setToken] = useStateB(null);
 
-  const submit = (e) => {
+  // Remote guestbook needs both the endpoint and a Turnstile check;
+  // without them (e.g. local dev) it falls back to browser-only entries.
+  const remote = Boolean(CONTACT_ENDPOINT && TURNSTILE_SITE_KEY);
+  const ts = useTurnstile(setToken, () => setToken(null));
+
+  const canSign = name.trim() && msg.trim() && (!remote || token) && !submitting;
+
+  const submit = async (e) => {
     e.preventDefault();
-    if (!name.trim() || !msg.trim()) return;
-    onSign({ name: name.trim(), msg: msg.trim(), date: new Date().toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "2-digit" }).toLowerCase() });
+    if (!canSign) return;
+    setErr("");
+    const entry = { id: newSubmissionId(), name: name.trim().slice(0, 40), msg: msg.trim().slice(0, 200), date: shortDate(new Date()) };
+
+    if (remote) {
+      setSubmitting(true);
+      try {
+        await postToSheet({
+          formType: "guestbook",
+          submissionId: entry.id,
+          name: entry.name,
+          message: entry.msg,
+          "cf-turnstile-response": token,
+        });
+      } catch {
+        setErr("couldn't reach the guestbook. mind trying again?");
+        setToken(null);
+        ts.reset();
+        setSubmitting(false);
+        return;
+      }
+      setToken(null);
+      ts.reset();
+      setSubmitting(false);
+    }
+
+    onSign(entry);
     setName(""); setMsg(""); setDone(true);
     setTimeout(() => setDone(false), 3500);
   };
 
   return (
     <form onSubmit={submit} style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 6 }}>
-      <input className="field" placeholder="your name" value={name} onChange={e => setName(e.target.value)} />
-      <textarea className="field" placeholder="a short message…" rows={2} value={msg} onChange={e => setMsg(e.target.value)} />
+      <input className="field" placeholder="your name" maxLength={40} value={name} onChange={e => setName(e.target.value)} />
+      <textarea className="field" placeholder="a short message…" rows={2} maxLength={200} value={msg} onChange={e => setMsg(e.target.value)} />
+      {remote && (
+        <div className="turnstile-wrap">
+          <div ref={ts.ref} />
+          <div className="turnstile-note">
+            {token ? "✓ thanks. you may sign." : "a quick check by cloudflare, then you can sign."}
+          </div>
+        </div>
+      )}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
-        <span className="hand" style={{ fontSize: 16, color: done ? "var(--accent)" : "var(--ink-soft)" }}>
-          {done ? "✓ signed. thank you." : <><DoodleArrow direction="external" /> stored locally · never sent anywhere.</>}
+        <span className="hand" role="status" style={{ fontSize: 16, color: done ? "var(--accent)" : err ? "#a13a2a" : "var(--ink-soft)" }}>
+          {done ? "✓ signed. thank you." : err || (submitting ? "signing…" : <><DoodleArrow direction="external" /> {remote ? "inked into the shared guestbook." : "stored locally · never sent anywhere."}</>)}
         </span>
-        <button className="btn-ink" type="submit" disabled={!name.trim() || !msg.trim()}>sign</button>
+        <button className="btn-ink" type="submit" disabled={!canSign}>{submitting ? "signing…" : "sign"}</button>
       </div>
     </form>
   );
@@ -422,12 +463,40 @@ function GuestbookForm({ onSign }) {
 const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY || "";
 const CONTACT_ENDPOINT = import.meta.env.VITE_CONTACT_WEB_APP_URL || "";
 
+const newSubmissionId = () =>
+  window.crypto?.randomUUID
+    ? window.crypto.randomUUID()
+    : `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+
+// POST to the Apps Script endpoint and read its JSON verdict.
+// Must be form-urlencoded: that's the only body type Apps Script parses into
+// e.parameter, and it's also a "simple request" content type (no CORS
+// preflight, which Apps Script can't answer). The response is readable cross-origin.
+async function postToSheet(fields) {
+  const params = new URLSearchParams(fields);
+  const res = await fetch(CONTACT_ENDPOINT, {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8" },
+    body: params.toString(),
+  });
+  if (!res.ok) throw new Error("network");
+  const json = await res.json();
+  if (json.result !== "success" && json.result !== "warning") {
+    throw new Error(json.message || "rejected");
+  }
+  return json;
+}
+
+const shortDate = (d) =>
+  d.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "2-digit" }).toLowerCase();
+
 function useTurnstile(onToken, onExpire) {
   const ref = useRefB(null);
   const widgetId = useRefB(null);
 
   useEffB(() => {
     let cancelled = false;
+    let poll = null;
     const mount = () => {
       if (cancelled || !ref.current || !window.turnstile) return;
       try {
@@ -444,13 +513,14 @@ function useTurnstile(onToken, onExpire) {
     };
     if (window.turnstile) { mount(); }
     else {
-      const t = setInterval(() => { if (window.turnstile) { clearInterval(t); mount(); } }, 200);
-      return () => { cancelled = true; clearInterval(t); };
+      poll = setInterval(() => { if (window.turnstile) { clearInterval(poll); mount(); } }, 200);
     }
     return () => {
       cancelled = true;
+      if (poll) clearInterval(poll);
       if (widgetId.current && window.turnstile) {
         try { window.turnstile.remove(widgetId.current); } catch (e) {}
+        widgetId.current = null;
       }
     };
   }, []);
@@ -487,21 +557,15 @@ function ContactForm() {
 
     setSubmitting(true);
     try {
-      const params = new URLSearchParams();
-      params.set("name", name.trim());
-      params.set("email", email.trim());
-      params.set("message", msg.trim());
-      params.set("cf-turnstile-response", token);
-      params.set("source", "nurahmadkhatim.github.io");
-
-      // Google Apps Script accepts text/plain to avoid CORS preflight
-      const res = await fetch(CONTACT_ENDPOINT, {
-        method: "POST",
-        headers: { "Content-Type": "text/plain;charset=utf-8" },
-        body: params.toString(),
-        mode: "no-cors",
+      await postToSheet({
+        formType: "contact",
+        submissionId: newSubmissionId(),
+        name: name.trim(),
+        email: email.trim(),
+        message: msg.trim(),
+        "cf-turnstile-response": token,
+        source: "nurahmadkhatim.github.io",
       });
-      if (!(res.ok || res.type === "opaque")) throw new Error("network");
       setDone(true);
       setName(""); setEmail(""); setMsg(""); setToken(null);
       ts.reset();
@@ -530,7 +594,7 @@ function ContactForm() {
       </div>
 
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, marginTop: 2 }}>
-        <span className="hand" style={{ fontSize: 16, color: done ? "var(--accent)" : err ? "#a13a2a" : "var(--ink-soft)" }}>
+        <span className="hand" role="status" style={{ fontSize: 16, color: done ? "var(--accent)" : err ? "#a13a2a" : "var(--ink-soft)" }}>
           {done ? "✓ sent. I'll reply within 48h." : err || (submitting ? "sending…" : <><DoodleArrow direction="external" /> powered by cloudflare turnstile.</>)}
         </span>
         <button className="btn-ink" type="submit" disabled={!canSubmit}>{submitting ? "sending…" : "send"}</button>
@@ -540,21 +604,45 @@ function ContactForm() {
 }
 
 function CorrespondenceSpread() {
-  // Guestbook
-  const [entries, setEntries] = useStateB(() => {
-    try {
-      const stored = JSON.parse(localStorage.getItem("naim.guestbook") || "[]");
-      return [...stored, ...SEED_GUEST];
-    } catch { return SEED_GUEST; }
+  // Guestbook: shared entries come from the spreadsheet; localStorage keeps
+  // the visitor's own signatures visible even if the fetch fails.
+  const [local, setLocal] = useStateB(() => {
+    try { return JSON.parse(localStorage.getItem("naim.guestbook") || "[]"); }
+    catch { return []; }
   });
+  const [remote, setRemote] = useStateB([]);
+
+  useEffB(() => {
+    if (!CONTACT_ENDPOINT) return;
+    let cancelled = false;
+    fetch(`${CONTACT_ENDPOINT}?action=guestbook`)
+      .then((r) => r.json())
+      .then((j) => {
+        if (cancelled || !Array.isArray(j.entries)) return;
+        setRemote(j.entries.map((e) => ({
+          id: e.id,
+          name: String(e.name || "").slice(0, 40),
+          msg: String(e.msg || "").slice(0, 200),
+          date: e.ts ? shortDate(new Date(e.ts)) : "",
+        })));
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, []);
+
   const sign = (e) => {
-    const next = [{ ...e, fresh: true, color: "var(--accent)" }, ...entries].slice(0, 10);
-    setEntries(next);
-    try {
-      const fresh = next.filter(x => x.fresh).map(({ fresh, ...rest }) => rest);
-      localStorage.setItem("naim.guestbook", JSON.stringify(fresh));
-    } catch {}
+    const next = [{ ...e, color: "var(--accent)" }, ...local].slice(0, 10);
+    setLocal(next);
+    try { localStorage.setItem("naim.guestbook", JSON.stringify(next)); } catch {}
   };
+
+  // Own unsynced signatures first, then the shared book, then the seeds.
+  const remoteIds = new Set(remote.map((e) => e.id));
+  const entries = [
+    ...local.filter((e) => !remoteIds.has(e.id)),
+    ...remote,
+    ...SEED_GUEST,
+  ].slice(0, 12);
 
   const SocialIcon = ({ name }) => {
     const common = { width: 18, height: 18, viewBox: "0 0 24 24", fill: "currentColor" };
@@ -567,6 +655,9 @@ function CorrespondenceSpread() {
       );
       case "Google Scholar": return (
         <svg {...common}><path d="M12 2L1 8.5l4 2.4V18l7 4 7-4v-7.1l3-1.8V18h2V8.5L12 2zm0 2.3l8.5 5L12 14.7 3.5 9.3 12 4.3zM6 12.4l6 3.5 6-3.5v4.4l-6 3.4-6-3.4v-4.4z"/></svg>
+      );
+      case "ORCID": return (
+        <svg {...common}><path d="M12 0C5.372 0 0 5.372 0 12s5.372 12 12 12 12-5.372 12-12S18.628 0 12 0zM7.369 4.378c.525 0 .947.431.947.947s-.422.947-.947.947a.95.95 0 0 1-.947-.947c0-.525.422-.947.947-.947zm-.722 3.038h1.444v10.041H6.647V7.416zm3.562 0h3.9c3.712 0 5.344 2.653 5.344 5.025 0 2.578-2.016 5.025-5.325 5.025h-3.919V7.416zm1.444 1.303v7.444h2.297c3.272 0 4.022-2.484 4.022-3.722 0-2.016-1.284-3.722-4.097-3.722h-2.222z"/></svg>
       );
       case "X / Twitter": return (
         <svg {...common}><path d="M17.53 3H21l-7.39 8.45L22 21h-6.84l-5.36-7-6.13 7H.18l7.9-9.04L0 3h7l4.85 6.42L17.53 3zm-1.2 16h1.9L7.78 5H5.74L16.33 19z"/></svg>
@@ -587,7 +678,8 @@ function CorrespondenceSpread() {
   const socials = [
     ["LinkedIn",       "in/nurahmadkhatim",   "https://www.linkedin.com/in/nurahmadkhatim"],
     ["GitHub",         "@naimackerman",       "https://github.com/naimackerman"],
-    ["Google Scholar", "Nur Ahmad Khatim",    "https://scholar.google.com/citations?user=NurAhmadKhatim"],
+    ["Google Scholar", "Nur Ahmad Khatim",    "https://scholar.google.com/citations?user=c9gt1_UAAAAJ"],
+    ["ORCID",          "0009-0008-6939-8121", "https://orcid.org/0009-0008-6939-8121"],
     ["Instagram",      "@naimackerman",       "https://www.instagram.com/naimackerman"],
     ["Medium",         "@naimackerman",       "https://medium.com/@naimackerman"],
     ["Email",          "naimackerman@gmail",  "mailto:naimackerman@gmail.com"],
@@ -631,7 +723,7 @@ function CorrespondenceSpread() {
           </div>
 
           <div className="smallcaps" style={{ color: "var(--mute)" }}>guestbook</div>
-          <div style={{ fontSize: 12, fontStyle: "italic", color: "var(--ink-soft)", marginBottom: 6 }}>sign here if you'd like. lives in your browser only.</div>
+          <div style={{ fontSize: 12, fontStyle: "italic", color: "var(--ink-soft)", marginBottom: 6 }}>sign here if you'd like — signatures are public, so future visitors can read them.</div>
 
           <GuestbookForm onSign={sign} />
         </div>
