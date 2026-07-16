@@ -13,6 +13,7 @@ html, body { margin: 0; padding: 0; background: var(--bookcase); }
   --ink-soft: #3d342a;
   --ink-soft-2: #5a4d3e;
   --mute: #8a7a6b;
+  --mute-strong: #6f6155;  /* darker mute for text under 12px (WCAG AA) */
   --accent: #c45d3a;          /* terracotta — tweakable */
   --accent-soft: rgba(196,93,58,0.12);
   --page-w: min(600px, calc((100vw - 72px) / 2));
@@ -56,6 +57,7 @@ body { font-family: 'Newsreader', 'Source Serif 4', Georgia, serif; }
 }
 .topbar a { color: inherit; text-decoration: none; border-bottom: 1px dotted currentColor; }
 .topbar a:hover { color: var(--accent); border-color: var(--accent); }
+.topbar a.cv-link { color: var(--accent); }
 .topbar > span:first-child { flex-shrink: 0; }
 .topbar > span:last-child {
   flex: 1 1 auto;
@@ -375,7 +377,6 @@ body { font-family: 'Newsreader', 'Source Serif 4', Georgia, serif; }
   border: 1.5px dashed var(--ink-soft);
   background: rgba(0,0,0,0.025);
   border-radius: 2px;
-  transform: rotate(-0.4deg);
   position: relative;
 }
 .turnstile-wrap::before {
@@ -395,9 +396,9 @@ body { font-family: 'Newsreader', 'Source Serif 4', Georgia, serif; }
 .turnstile-note {
   margin-top: 4px;
   font-family: 'Newsreader', serif;
-  font-size: 10.5px;
+  font-size: 11.5px;
   font-style: italic;
-  color: var(--mute);
+  color: var(--mute-strong);
   text-align: center;
 }
 
@@ -410,7 +411,6 @@ body { font-family: 'Newsreader', 'Source Serif 4', Georgia, serif; }
   border-radius: 12px;
   background: #121212;
   box-shadow: 0 4px 14px rgba(0,0,0,0.18);
-  transform: rotate(-0.3deg);
 }
 .spotify-compact {
   display: none;
@@ -568,6 +568,34 @@ body { font-family: 'Newsreader', 'Source Serif 4', Georgia, serif; }
 .book-nav .center { min-width: 0; overflow: hidden; text-align: center; text-overflow: ellipsis; white-space: nowrap; opacity: 0.78; }
 .book-nav .right  { text-align: right; }
 
+/* — Chapter scrubber — jump to any chapter from the nav, one click from anywhere */
+.chapter-scrubber {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.chapter-scrubber .scrub {
+  background: transparent;
+  border: 1px solid rgba(244,236,220,0.25);
+  color: rgba(244,236,220,0.55);
+  min-width: 34px;
+  padding: 7px 6px;
+  font-family: 'Special Elite', monospace;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease;
+}
+.chapter-scrubber .scrub:hover { border-color: var(--accent); color: var(--accent); }
+.chapter-scrubber .scrub.current {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: rgba(196,93,58,0.12);
+}
+
 /* edge click zones for flipping */
 .edge-flip {
   position: absolute;
@@ -634,7 +662,6 @@ body { font-family: 'Newsreader', 'Source Serif 4', Georgia, serif; }
   border: 1.5px dashed var(--accent);
   border-radius: 2px;
   background: var(--accent-soft);
-  transform: rotate(-0.35deg);
 }
 .cv-slip .smallcaps { color: var(--accent); margin-bottom: 4px; }
 .cv-slip-title {
@@ -661,6 +688,29 @@ body { font-family: 'Newsreader', 'Source Serif 4', Georgia, serif; }
   justify-content: center;
   min-height: 36px;
   padding: 8px 12px;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+/* — "In a hurry?" recruiter fast path on the cover — */
+.hurry-slip {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 14px;
+  align-items: center;
+  margin-top: 12px;
+  padding: 10px 14px;
+  border: 1.5px dashed var(--accent);
+  border-radius: 2px;
+  background: var(--accent-soft);
+}
+.hurry-slip .cv-actions .btn-ink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 32px;
+  padding: 6px 10px;
+  font-size: 11px;
   text-decoration: none;
   white-space: nowrap;
 }
@@ -725,6 +775,11 @@ body { font-family: 'Newsreader', 'Source Serif 4', Georgia, serif; }
   .runhead { margin-bottom: 14px; }
   .book-nav { gap: 8px; font-size: 11px; }
   .book-nav .btn { padding: 8px 10px; font-size: 10px; }
+  .chapter-scrubber { gap: 4px; }
+  .chapter-scrubber .scrub { min-width: 30px; min-height: 44px; padding: 6px 4px; font-size: 11px; }
+  .cover-standfirst { font-size: 16px !important; margin-top: 12px !important; }
+  .hurry-slip { grid-template-columns: 1fr; gap: 10px; margin-top: 16px; padding: 12px 14px; }
+  .hurry-slip .cv-actions { justify-content: flex-start; }
 }
 
 @media (max-width: 360px) {
@@ -791,13 +846,21 @@ body { font-family: 'Newsreader', 'Source Serif 4', Georgia, serif; }
     font-size: 28px !important;
     line-height: .96 !important;
   }
-  .cover-note {
+  .cover-standfirst {
     grid-column: 2;
     grid-row: 1;
     margin: 0 !important;
     font-size: 11px !important;
-    line-height: 1.05 !important;
+    line-height: 1.2 !important;
   }
+  .cover-note { display: none; }
+  .hurry-slip {
+    grid-column: 1 / -1;
+    margin-top: 8px;
+    padding: 8px 10px;
+    gap: 8px;
+  }
+  .hurry-slip .cv-actions .btn-ink { min-height: 28px; padding: 4px 8px; font-size: 10px; }
   .cover-photo-row {
     grid-column: 2;
     grid-row: 2 / span 2;
@@ -1029,7 +1092,7 @@ a.gh-card:hover, .gh-card[role="button"]:hover {
 .social-card:hover .social-icon { background: var(--accent); }
 .social-card .social-body { flex: 1; min-width: 0; }
 .social-card .social-name { font-family: 'Newsreader', serif; font-size: 14px; font-weight: 600; transition: color 0.2s ease; }
-.social-card .social-handle { font-family: 'Special Elite', monospace; font-size: 10px; color: var(--mute); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.social-card .social-handle { font-family: 'Special Elite', monospace; font-size: 11px; color: var(--mute-strong); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .social-card .social-arrow { color: var(--ink-soft); font-size: 14px; transition: transform 0.2s ease, color 0.2s ease; flex-shrink: 0; }
 
 /* ─── Guestbook entries — feel like a real signed card ─── */
@@ -1075,8 +1138,8 @@ a.gh-card:hover, .gh-card[role="button"]:hover {
 }
 .guest-card .guest-meta {
   font-family: 'Special Elite', monospace;
-  font-size: 10px;
-  color: var(--mute);
+  font-size: 11px;
+  color: var(--mute-strong);
   margin-top: 6px;
   display: flex;
   justify-content: space-between;
@@ -1104,7 +1167,7 @@ a.gh-card:hover, .gh-card[role="button"]:hover {
 }
 .gh-card .name { font-family: 'Caveat', cursive; font-size: 22px; color: var(--ink); line-height: 1; }
 .gh-card .msg { font-family: 'Newsreader', serif; font-size: 14px; color: var(--ink-soft); margin-top: 4px; font-style: italic; }
-.gh-card .meta { font-family: 'Special Elite', monospace; font-size: 10px; color: var(--mute); margin-top: 6px; }
+.gh-card .meta { font-family: 'Special Elite', monospace; font-size: 11px; color: var(--mute-strong); margin-top: 6px; }
 
 .now-cell {
   border: 1px solid rgba(0,0,0,0.2);
@@ -1113,7 +1176,7 @@ a.gh-card:hover, .gh-card[role="button"]:hover {
   border-radius: 2px;
   position: relative;
 }
-.now-cell .label { font-family: 'Special Elite', monospace; font-size: 10px; color: var(--mute); letter-spacing: 0.1em; }
+.now-cell .label { font-family: 'Special Elite', monospace; font-size: 11px; color: var(--mute-strong); letter-spacing: 0.1em; }
 .now-cell .val   { font-family: 'Newsreader', serif; font-size: 16px; color: var(--ink); margin-top: 4px; line-height: 1.35; }
 .now-cell .sub   { font-family: 'Newsreader', serif; font-size: 12px; color: var(--mute); font-style: italic; margin-top: 2px; }
 
@@ -1138,4 +1201,25 @@ a.gh-card:hover, .gh-card[role="button"]:hover {
   .cover-photo-row { margin-top: 16px !important; }
   .cover-photo-row img { width: 96px !important; height: 110px !important; }
   .cover-stamps { margin-top: 14px !important; }
+}
+
+/* ───────────────────── Institution logos, recolored to the ink ───────────── */
+.org-logo {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+  /* recolor toward the terracotta accent (#c45d3a) */
+  filter: grayscale(1) sepia(0.9) saturate(1.6) hue-rotate(-16deg) brightness(0.85);
+  mix-blend-mode: multiply; /* white logo backgrounds melt into the paper */
+  flex-shrink: 0;
+  transition: filter 0.25s ease;
+}
+.org-logo-lg {
+  width: 64px;
+  height: 64px;
+}
+/* hover: reveal the original logo in its true colors */
+.org-logo-lg:hover {
+  filter: none;
+  mix-blend-mode: normal;
 }

@@ -33,7 +33,7 @@ function TeachingSpread() {
             {[["72", "students taught"], ["25", "C/C++ kids @ HMTC GTS"], ["3", "years of HMTC trainings"]].map(([n, l]) => (
               <div key={l} style={{ textAlign: "center" }}>
                 <div className="display" style={{ fontSize: 28, color: "var(--accent)" }}>{n}</div>
-                <div className="mono" style={{ fontSize: 9, color: "var(--mute)" }}>{l}</div>
+                <div className="mono" style={{ fontSize: 11, color: "var(--mute-strong)" }}>{l}</div>
               </div>
             ))}
           </div>
@@ -88,7 +88,11 @@ function TeachingSpread() {
 // ════════════════════════════════════════════════════════════════════════════
 
 const AWARDS = [
-  { title: "Best Paper Presentation Award", org: "IMMaN 2024 Conference", year: "Sep 2024", marker: "★", featured: true,
+  { title: "MEXT Scholarship Awardee", org: "Master's degree at NAIST", year: "Oct 2026 — Sep 2028", marker: "⛩", featured: true,
+    note: "off to the Mathematical Informatics Lab." },
+  { title: "Paper Poster Presentation", org: "INCOSE IS 2026 · Yokohama, Japan", year: "Jun 2026", marker: "✧",
+    note: "the human-robot co-dispatch work, on a wall in Yokohama." },
+  { title: "Best Paper Presentation Award", org: "IMMaN 2024 Conference", year: "Sep 2024", marker: "★",
     note: "the one I keep telling people about." },
   { title: "Research Assistance for Research & Innovation Talents", org: "BRIN Indonesia", year: "Jan 2023", marker: "✦",
     note: "tiny grant, huge confidence boost." },
@@ -110,28 +114,25 @@ function AwardsSpread() {
         <h2 className="chapter-title">Awards &amp; accidents.</h2>
 
         <p className="bodytext drop-cap">
-          Most of these happened in 2018–2019, when I was an extremely
-          earnest teenager who really, really liked <Whisper say="and physics. and any subject with a podium.">mathematics</Whisper>.
+          Most of these happened in 2018–2019, when I was an extremely earnest teenager who really, really liked <Whisper say="and physics. and any subject with a podium.">mathematics</Whisper>.
         </p>
         <p className="bodytext">
-          In 2024, I presented our LLM work for ePuskesmas at IMMaN, an online
-          conference for medical doctors. Somehow, it came home with the best-paper presentation award.
+          In 2024, I presented our LLM work for ePuskesmas at IMMaN, an online conference for medical doctors. Somehow, it came home with the best-paper presentation award. And then came the biggest one yet — a ticket to Japan.
         </p>
 
-        <div style={{ marginTop: 18, padding: 16, background: "var(--accent-soft)", border: "2px solid var(--accent)", borderRadius: 2, transform: "rotate(-0.6deg)" }}>
-          <div className="mono" style={{ fontSize: 10, color: "var(--accent)" }}>FEATURED · SEP 2024</div>
-          <div className="display" style={{ fontSize: 22, margin: "4px 0 4px", color: "var(--ink)" }}>1st place — Best Paper Presentation</div>
+        <div style={{ marginTop: 18, padding: 16, background: "var(--accent-soft)", border: "2px solid var(--accent)", borderRadius: 2 }}>
+          <div className="mono" style={{ fontSize: 11, color: "var(--accent)" }}>FEATURED · 2026</div>
+          <div className="display" style={{ fontSize: 22, margin: "4px 0 4px", color: "var(--ink)" }}>MEXT Scholarship Awardee</div>
           <div style={{ fontFamily: "'Newsreader', serif", fontSize: 13, fontStyle: "italic", color: "var(--ink-soft)" }}>
-            International Meeting on Medical Network (IMMaN), 2024 · online
+            Japanese Government (MEXT) Scholarship · university recommendation · Nara Institute of Science and Technology
           </div>
           <div className="hand" style={{ fontSize: 20, color: "var(--ink-soft)", marginTop: 6 }}>
-            <DoodleArrow /> for our LLM ePuskesmas paper. I'm still surprised.
+            <DoodleArrow /> joining the Mathematical Informatics Lab under Prof. Kazushi Ikeda. see you soon, Nara.
           </div>
         </div>
 
         <div className="marg" style={{ marginTop: "auto", paddingTop: 14, color: "var(--ink-soft)" }}>
-          → a fuller list on the right.<br/>
-          accidents are footnoted.
+          → a fuller list on the right.
         </div>
       </Page>
 
@@ -151,7 +152,7 @@ function AwardsSpread() {
                   <div style={{ fontFamily: "'Newsreader', serif", fontSize: 12, color: "var(--ink-soft)", fontStyle: "italic" }}>{a.org}</div>
                   {a.note && <div className="hand" style={{ fontSize: 16, color: "var(--accent)" }}><DoodleArrow /> {a.note}</div>}
                 </div>
-                <span className="mono" style={{ fontSize: 10, color: "var(--mute)" }}>{a.year}</span>
+                <span className="mono" style={{ fontSize: 11, color: "var(--mute-strong)" }}>{a.year}</span>
               </li>
             ))}
           </ul>
@@ -176,7 +177,7 @@ const PAPERS_NOW = [
 ];
 const LISTENING = [
   ["Risk It All",           "on repeat"],
-  ["DAISIES",               "between tasks"],
+  ["WALKING AWAY",          "between tasks"],
   ["Too Sweet",             "for late hours"],
   ["How Deep Is Your Love", "for quieter work"],
 ];
@@ -189,8 +190,7 @@ function NowSpread() {
         <h2 className="chapter-title">Currently.</h2>
 
         <p className="bodytext drop-cap">
-          A snapshot. Last tended on <strong>13 July 2026</strong>.
-          If you're reading this much later than that, ask me what's new — I usually have feelings about it.
+          A snapshot. Last tended on <strong>16 July 2026</strong>. If you're reading this much later than that, ask me what's new — I usually have feelings about it.
         </p>
 
         <div className="smallcaps" style={{ color: "var(--mute)", marginTop: 18, marginBottom: 6 }}>reading</div>
@@ -199,7 +199,7 @@ function NowSpread() {
             <li key={i}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 8 }}>
                 <span style={{ fontFamily: "'Newsreader', serif", fontSize: 14 }}><strong>{b.t}</strong> · <em style={{ color: "var(--ink-soft)" }}>{b.a}</em></span>
-                <span className="mono" style={{ fontSize: 10, color: "var(--mute)" }}>{b.pct}%</span>
+                <span className="mono" style={{ fontSize: 11, color: "var(--mute-strong)" }}>{b.pct}%</span>
               </div>
               <div style={{ height: 5, background: "rgba(0,0,0,0.08)", borderRadius: 4, marginTop: 4, overflow: "hidden" }}>
                 <div style={{ width: `${b.pct}%`, height: "100%", background: "var(--accent)" }} />
@@ -270,9 +270,9 @@ function NowSpread() {
             ["a super app for boarding schools", "ecosystem platform", "SIAKAD, e-learning, card payments & school management."],
             ["this website",         "React + Vite",           "you're inside it."],
           ].map(([t, stack, what], i) => (
-            <div key={i} className="gh-card" style={{ transform: `rotate(${(i % 2 ? 0.4 : -0.5)}deg)`, padding: "8px 12px" }}>
+            <div key={i} className="gh-card" style={{ padding: "8px 12px" }}>
               <div style={{ fontFamily: "'Newsreader', serif", fontSize: 13 }}><strong>{t}</strong></div>
-              <div className="mono" style={{ fontSize: 10, color: "var(--mute)" }}>{stack}</div>
+              <div className="mono" style={{ fontSize: 11, color: "var(--mute-strong)" }}>{stack}</div>
               <div className="hand" style={{ fontSize: 15, color: "var(--ink-soft)" }}><DoodleArrow /> {what}</div>
             </div>
           ))}
@@ -348,11 +348,9 @@ function MarginaliaSpread() {
         <div className="smallcaps" style={{ color: "var(--mute)" }}>things I'm currently wrong about</div>
         <ul style={{ listStyle: "none", padding: 0, margin: "6px 0 14px", display: "flex", flexDirection: "column", gap: 4 }}>
           {[
-            "My Yokohama poster will be finished well ahead of schedule.",
             "I will absolutely finish this paper by Friday.",
-            "RAG is mostly a haircut. (probably.)",
             "I don't need a second monitor.",
-            "I'm going to wake up at 6am tomorrow.",
+            "I'm going to wake up at 4am tomorrow.",
           ].map((t, i) => (
             <li key={i} className="hand" style={{ fontSize: 20, color: "var(--ink-soft)", lineHeight: 1.25 }}>· {t}</li>
           ))}
@@ -676,13 +674,13 @@ function CorrespondenceSpread() {
   };
 
   const socials = [
-    ["LinkedIn",       "in/nurahmadkhatim",   "https://www.linkedin.com/in/nurahmadkhatim"],
-    ["GitHub",         "@naimackerman",       "https://github.com/naimackerman"],
-    ["Google Scholar", "Nur Ahmad Khatim",    "https://scholar.google.com/citations?user=c9gt1_UAAAAJ"],
-    ["ORCID",          "0009-0008-6939-8121", "https://orcid.org/0009-0008-6939-8121"],
-    ["Instagram",      "@naimackerman",       "https://www.instagram.com/naimackerman"],
-    ["Medium",         "@naimackerman",       "https://medium.com/@naimackerman"],
-    ["Email",          "naimackerman@gmail",  "mailto:naimackerman@gmail.com"],
+    ["LinkedIn",       "in/nurahmadkhatim",         "https://www.linkedin.com/in/nurahmadkhatim"],
+    ["GitHub",         "@naimackerman",             "https://github.com/naimackerman"],
+    ["Google Scholar", "Nur Ahmad Khatim",          "https://scholar.google.com/citations?user=c9gt1_UAAAAJ"],
+    ["ORCID",          "0009-0008-6939-8121",       "https://orcid.org/0009-0008-6939-8121"],
+    ["Instagram",      "@naimackerman",             "https://www.instagram.com/naimackerman"],
+    ["Medium",         "@naimackerman",             "https://medium.com/@naimackerman"],
+    ["Email",          "nurahmadkhatim@gmail.com",  "mailto:nurahmadkhatim@gmail.com"],
   ];
 
   return (

@@ -4,6 +4,7 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useR
 
 export const BookCtx = createContext({});
 const FLIP_MS = 900;
+const CV_URL = new URL("../../CV-Nur Ahmad Khatim.pdf", import.meta.url).href;
 
 // ─── Primitives ──────────────────────────────────────────────────────────────
 
@@ -111,6 +112,26 @@ export function PhotoFig({ src = "/images/foto-naim-2.png", w = 180, caption, ro
 export function Stamp({ children, rotate = -3, round = false, ink = false, green = false, style }) {
   const cls = "stamp" + (round ? " round" : "") + (ink ? " ink" : "") + (green ? " green" : "");
   return <span className={cls} style={{ transform: `rotate(${rotate}deg)`, ...(style || {}) }}>{children}</span>;
+}
+
+// Chapter scrubber — jump to any chapter from anywhere (replaces the static
+// center label in the nav; current chapter inked in accent).
+function ChapterScrubber({ chapters, currentId, goto }) {
+  return (
+    <div className="chapter-scrubber" role="navigation" aria-label="Chapters">
+      {chapters.filter((c) => c.roman).map((c) => (
+        <button
+          key={c.id}
+          className={"scrub" + (c.id === currentId ? " current" : "")}
+          title={`${c.roman} · ${c.title}`}
+          aria-label={`Chapter ${c.roman} — ${c.title}`}
+          aria-current={c.id === currentId ? "page" : undefined}
+          onClick={() => goto(c.id)}>
+          {c.roman}
+        </button>
+      ))}
+    </div>
+  );
 }
 
 // ─── Spread renderer with its own context ───────────────────────────────────
@@ -333,7 +354,7 @@ export function Book({ chapters }) {
   return (
     <div className="book-app">
       <div className="topbar">
-        <span>NURAHMADKHATIM.GITHUB.IO · <a href="#cover-0" onClick={(e) => {e.preventDefault();goto("cover");}}>cover</a> · <a href="#correspondence-0" onClick={(e) => {e.preventDefault();goto("correspondence");}}>say hi</a></span>
+        <span>NURAHMADKHATIM.GITHUB.IO · <a href="#cover-0" onClick={(e) => {e.preventDefault();goto("cover");}}>contents</a> · <a href="#correspondence-0" onClick={(e) => {e.preventDefault();goto("correspondence");}}>say hi</a> · <a className="cv-link" href={CV_URL} target="_blank" rel="noopener noreferrer">cv ↓</a></span>
         <span>{ch.id !== "cover" ? ch.roman : "—"} &nbsp;·&nbsp; spread {idx + 1} of {flat.length} &nbsp;·&nbsp; <span className="kbd">←</span> <span className="kbd">→</span> &nbsp;or swipe</span>
       </div>
 
@@ -378,7 +399,7 @@ export function Book({ chapters }) {
       <div className="book-nav">
         <div><button className="btn" onClick={prev} disabled={!canPrev || !!flip}>← previous</button></div>
         <div className="center">
-          {ch.id === "cover" ? "open the book →" : <>chapter {ch.roman} · <em>{ch.title}</em></>}
+          {ch.id === "cover" ? "open the book →" : <ChapterScrubber chapters={chapters} currentId={ch.id} goto={goto} />}
         </div>
         <div className="right"><button className="btn" onClick={next} disabled={!canNext || !!flip}>next →</button></div>
       </div>
@@ -388,7 +409,7 @@ export function Book({ chapters }) {
 
 // ─── Mobile book — single page, slide-in transitions ────────────────────────
 
-function MobileBook({ cur, idx, mPage, next, prev, goto, canNext, canPrev, flat, wrapRef, spreadState, updateSpreadState }) {
+function MobileBook({ cur, idx, mPage, next, prev, goto, canNext, canPrev, chapters, flat, wrapRef, spreadState, updateSpreadState }) {
   const ch = cur.chapter;
 
   // For the slide animation, track key change
@@ -408,7 +429,7 @@ function MobileBook({ cur, idx, mPage, next, prev, goto, canNext, canPrev, flat,
   return (
     <div className="book-app">
       <div className="topbar">
-        <span><a href="#cover-0" onClick={(e) => {e.preventDefault();goto("cover");}}>cover</a> · <a href="#correspondence-0" onClick={(e) => {e.preventDefault();goto("correspondence");}}>say hi</a></span>
+        <span><a href="#cover-0" onClick={(e) => {e.preventDefault();goto("cover");}}>contents</a> · <a href="#correspondence-0" onClick={(e) => {e.preventDefault();goto("correspondence");}}>say hi</a> · <a className="cv-link" href={CV_URL} target="_blank" rel="noopener noreferrer">cv ↓</a></span>
         <span>{ch.id !== "cover" ? ch.roman : "—"} &nbsp;·&nbsp; {idx + 1}/{flat.length} · {mPage}</span>
       </div>
 
@@ -424,7 +445,7 @@ function MobileBook({ cur, idx, mPage, next, prev, goto, canNext, canPrev, flat,
       <div className="book-nav">
         <div><button className="btn" onClick={prev} disabled={!canPrev && mPage === "left"}>← back</button></div>
         <div className="center">
-          {ch.id === "cover" ? "swipe to open →" : <>{ch.roman} · <em>{ch.title}</em></>}
+          {ch.id === "cover" ? "swipe to open →" : <ChapterScrubber chapters={chapters} currentId={ch.id} goto={goto} />}
         </div>
         <div className="right"><button className="btn" onClick={next} disabled={!canNext && mPage === "right"}>next →</button></div>
       </div>
