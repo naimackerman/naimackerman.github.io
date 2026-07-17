@@ -318,12 +318,13 @@ function BuildingSpread() {
       </Page>
 
       <Page side="right" runRight="II · on building">
-        <div style={{ flexShrink: 0, position: "relative" }}>
-          <div className="smallcaps" style={{ color: "var(--mute)" }}>{TYPE_LABEL[org.type]}</div>
-          <h3 className="display" style={{ fontSize: 30, margin: "4px 0 4px", color: "var(--ink)" }}>{org.short}</h3>
-          <div className="mono" style={{ fontSize: 11, color: "var(--mute)" }}>{org.here}</div>
-          <img className="org-logo org-logo-lg" src={org.logo} alt={`${org.short} logo`}
-               style={{ position: "absolute", top: 0, right: 0 }} />
+        <div style={{ flexShrink: 0, display: "flex", alignItems: "flex-start", gap: 12 }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div className="smallcaps" style={{ color: "var(--mute)" }}>{TYPE_LABEL[org.type]}</div>
+            <h3 className="display" style={{ fontSize: 30, margin: "4px 0 4px", color: "var(--ink)" }}>{org.short}</h3>
+            <div className="mono" style={{ fontSize: 11, color: "var(--mute)" }}>{org.here}</div>
+          </div>
+          <img className="org-logo org-logo-lg" src={org.logo} alt={`${org.short} logo`} />
         </div>
 
         <div className="scroll-region" style={{ marginTop: 18, paddingLeft: 18 }}>

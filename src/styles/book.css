@@ -756,7 +756,7 @@ body { font-family: 'Newsreader', 'Source Serif 4', Georgia, serif; }
 }
 
 @media (max-width: 700px) {
-  :root { --page-w: calc(100vw - 16px); --page-h: calc(100dvh - 84px); }
+  :root { --page-w: calc(100vw - 16px); --page-h: calc(100dvh - 100px); }
   .page.left  { padding: clamp(18px, 5vh, 36px) 24px 14px 28px; }
   .page.right { padding: clamp(18px, 5vh, 36px) 28px 14px 24px; }
   .chapter-title { font-size: 34px; }
@@ -773,10 +773,13 @@ body { font-family: 'Newsreader', 'Source Serif 4', Georgia, serif; }
   .cover-stamps { gap: 7px !important; margin-top: 12px !important; }
   .cover-stamps .stamp { padding: 4px 7px 3px; font-size: 10px; }
   .runhead { margin-bottom: 14px; }
-  .book-nav { gap: 8px; font-size: 11px; }
-  .book-nav .btn { padding: 8px 10px; font-size: 10px; }
-  .chapter-scrubber { gap: 4px; }
-  .chapter-scrubber .scrub { min-width: 30px; min-height: 44px; padding: 6px 4px; font-size: 11px; }
+  .book-nav { gap: 4px; font-size: 11px; }
+  .book-nav .btn { padding: 8px 6px; font-size: 10px; white-space: nowrap; }
+  .chapter-scrubber { gap: 2px; flex-wrap: nowrap; }
+  .chapter-scrubber .scrub { min-width: 18px; min-height: 36px; padding: 5px 1px; font-size: 9px; letter-spacing: 0; }
+  .whisper-bubble { white-space: normal; width: max-content; max-width: min(68vw, 260px); }
+  .spotify-player { display: none; }
+  .spotify-compact { display: flex; }
   .cover-standfirst { font-size: 16px !important; margin-top: 12px !important; }
   .hurry-slip { grid-template-columns: 1fr; gap: 10px; margin-top: 16px; padding: 12px 14px; }
   .hurry-slip .cv-actions { justify-content: flex-start; }
