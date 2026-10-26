@@ -204,19 +204,30 @@ const clamp01 = (v) => Math.min(1, Math.max(0, v));
 const NO_DRAG = "a, button, input, textarea, select, iframe, label, [contenteditable]";
 const CORNER_LIFT = 0.16; // how high a clicked page's corner rises mid-turn, × page height
 const GRIP = 0.2; // width of the draggable outer edge, × page width
+const RING_R = 14; // single-page view: how far a page curls out past its hinge, px (≈ the coil's loop)
 
 // One turning sheet: the part still lying flat, and the folded-over flap
 // showing the sheet's back. `nodes` collects the DOM nodes foldSheet() moves.
-function Sheet({ nodes, front, back }) {
+// `wraps`: single-page view, where the flap curls round the binding past the
+// hinge — that part sits under the coil, the rest of the flap over it.
+function Sheet({ nodes, front, back, wraps }) {
   return (
     <>
       <div className="sheet-front" ref={(el) => nodes.front = el}>
         {front || <div className="paper-blank" />}
       </div>
+      {wraps &&
+      <div className="sheet-wrapped">
+          <div className="sheet-back" ref={(el) => nodes.backOver = el}>
+            {back || <div className="paper-blank" />}
+          </div>
+        </div>
+      }
       <div className="sheet-flap" ref={(el) => nodes.flap = el}>
         <div className="sheet-back" ref={(el) => nodes.back = el}>
           {back || <div className="paper-blank" />}
           <div className="fold-band shade-back" ref={(el) => nodes.backShade = el} />
+          {!wraps && <div className="back-gutter" ref={(el) => nodes.backGutter = el} />}
         </div>
       </div>
     </>);
@@ -263,7 +274,9 @@ export function Book({ chapters }) {
     const f = foldRef.current;
     if (!f || !sheetNodes.current.front) return;
     const liftOf = (P) => Math.sin(Math.PI * clamp01((f.P0.x - P.x) / (2 * f.P0.x)));
-    const crease = foldSheet(sheetNodes.current, { ...f, lift: liftOf(f.P) });
+    // Once nearly over, the curl round the binding tucks away underneath too.
+    const wrapRadius = f.wraps ? RING_R * clamp01((1 - (f.P0.x - f.P.x) / (2 * f.P0.x)) * 6) : null;
+    const crease = foldSheet(sheetNodes.current, { ...f, lift: liftOf(f.P), wrapRadius });
     castShadow(castBox.current, castStrip.current, crease, f.W);
     // Riffled blank leaves run ahead of the real one (the first lands first, underneath)
     const ghosts = ghostNodes.current;
@@ -322,7 +335,7 @@ export function Book({ chapters }) {
   // Wrap size → fold frame. Desktop folds about the centre spine; mobile about the left edge.
   const measure = (dir) => {
     const r = wrapRef.current.getBoundingClientRect();
-    if (isMobile) return { W: r.width, H: r.height, spineX: 0, s: 1, left: r.left, top: r.top };
+    if (isMobile) return { W: r.width, H: r.height, spineX: 0, s: 1, left: r.left, top: r.top, wraps: true };
     return { W: r.width / 2, H: r.height, spineX: r.width / 2, s: dir === "next" ? 1 : -1, left: r.left, top: r.top };
   };
 
@@ -603,7 +616,7 @@ function MobileBook({ cur, tgt, idx, mPage, turn, next, prev, goto, canNext, can
         {turn &&
         <>
             {cast}
-            <Sheet nodes={sheetNodes.current} front={leaf} />
+            <Sheet nodes={sheetNodes.current} front={leaf} wraps />
           </>
         }
         {/* Wire coil down the hinge edge — shown at tablet widths (see book.css) */}

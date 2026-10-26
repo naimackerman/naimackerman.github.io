@@ -87,10 +87,10 @@ body { font-family: 'Newsreader', 'Source Serif 4', Georgia, serif; }
   position: absolute;
   left: 50%;
   top: 0; bottom: 0;
-  width: 80px;
+  width: 110px;
   transform: translateX(-50%);
   background:
-    linear-gradient(90deg, transparent 0%, rgba(0,0,0,0.05) 30%, rgba(0,0,0,0.22) 50%, rgba(0,0,0,0.05) 70%, transparent 100%);
+    linear-gradient(90deg, transparent 0%, rgba(0,0,0,0.05) 20%, rgba(0,0,0,0.14) 38%, rgba(0,0,0,0.26) 50%, rgba(0,0,0,0.07) 62%, rgba(0,0,0,0.02) 80%, transparent 100%);
   pointer-events: none;
   z-index: 9;
 }
@@ -121,6 +121,10 @@ body { font-family: 'Newsreader', 'Source Serif 4', Georgia, serif; }
 }
 .page.left  { box-shadow: -6px 28px 40px rgba(0,0,0,0.42); }
 .page.right { box-shadow:  6px 28px 40px rgba(0,0,0,0.42); }
+/* Keep each page's drop shadow off its neighbour: the gutter is shaded only
+   by .spine-shadow, which stays on top, so it looks the same mid-turn as at rest */
+.spread .page.left  { clip-path: inset(-80px 0 -80px -80px); }
+.spread .page.right { clip-path: inset(-80px -80px -80px 0); }
 
 /* paper grain */
 .page::after {
@@ -496,7 +500,7 @@ body { font-family: 'Newsreader', 'Source Serif 4', Georgia, serif; }
 .sheet-flap {
   position: absolute;
   inset: 0;
-  z-index: 10;              /* above the spine shadow, so a flap crossing it stays lit */
+  z-index: 11;              /* above the spine shadow and the coil, so a lifted flap stays on top */
   pointer-events: none;
   will-change: filter;
 }
@@ -508,6 +512,38 @@ body { font-family: 'Newsreader', 'Source Serif 4', Georgia, serif; }
   height: 100%;
 }
 .sheet-front .mobile-spread { filter: none; }
+/* Single-page view: the bit of flap curling round the binding, tucked under the coil */
+.sheet-wrapped {
+  position: absolute;
+  inset: 0;
+  z-index: 9;
+  pointer-events: none;
+}
+.sheet-wrapped .sheet-back { filter: brightness(0.72); }
+
+/* The flap's own half of the gutter — the same ramp as .spine-shadow's half
+   (55px, 1px seam line included), on whichever edge lands at the spine */
+.back-gutter {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 55px;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 3;
+}
+.back-gutter[data-spine="right"] {
+  right: 0;
+  background:
+    linear-gradient(to left, rgba(0,0,0,0.18) 0 0.5px, transparent 0.5px),
+    linear-gradient(to left, rgba(0,0,0,0.26) 0, rgba(0,0,0,0.14) 13.2px, rgba(0,0,0,0.05) 33px, transparent 55px);
+}
+.back-gutter[data-spine="left"] {
+  left: 0;
+  background:
+    linear-gradient(to right, rgba(0,0,0,0.18) 0 0.5px, transparent 0.5px),
+    linear-gradient(to right, rgba(0,0,0,0.26) 0, rgba(0,0,0,0.07) 13.2px, rgba(0,0,0,0.02) 33px, transparent 55px);
+}
 
 /* Shading strips: left edge on the crease, gradient running away from it */
 .fold-band {
@@ -521,9 +557,9 @@ body { font-family: 'Newsreader', 'Source Serif 4', Georgia, serif; }
   z-index: 2;
 }
 /* The flap: dark deep in the crease, a sheen where the paper rolls over, fading out */
-.shade-back  { background: linear-gradient(to right, rgba(0,0,0,0.30), rgba(0,0,0,0.08) 8%, rgba(255,250,240,0.16) 22%, rgba(255,250,240,0) 45%, rgba(0,0,0,0.06) 100%); }
+.shade-back  { background: linear-gradient(to right, rgba(0,0,0,0.16), rgba(0,0,0,0.04) 10%, rgba(255,250,240,0.08) 24%, rgba(255,250,240,0) 50%); }
 /* The page being uncovered, in the lifted flap's shadow */
-.shade-cast  { background: linear-gradient(to right, rgba(0,0,0,0.45), rgba(0,0,0,0.14) 30%, rgba(0,0,0,0)); }
+.shade-cast  { background: linear-gradient(to right, rgba(0,0,0,0.2), rgba(0,0,0,0.07) 40%, rgba(0,0,0,0)); }
 .fold-cast {
   position: absolute;
   top: 0;
@@ -1267,9 +1303,14 @@ a.gh-card:hover, .gh-card[role="button"]:hover {
     bottom: 14px;
     left: -19px;              /* 19px of coil overhangs the edge (the tile's page edge, x = 16, scaled ×1.2) */
     width: 48px;
-    z-index: 13;
+    z-index: 10;              /* over flat pages and the curl round it, under a lifted flap */
     pointer-events: none;
     background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='40' height='26' viewBox='0 0 40 26'><defs><linearGradient id='w' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='%23fbfbf9'/><stop offset='0.35' stop-color='%23d6d6d2'/><stop offset='0.7' stop-color='%239b9b97'/><stop offset='1' stop-color='%2364645f'/></linearGradient><radialGradient id='h' cx='0.45' cy='0.35' r='0.7'><stop offset='0' stop-color='%230e0b08'/><stop offset='1' stop-color='%233a3128'/></radialGradient><clipPath id='p'><rect x='16' y='0' width='24' height='26'/></clipPath><filter id='b' x='-20%' y='-40%' width='140%' height='180%'><feGaussianBlur stdDeviation='0.9'/></filter></defs><ellipse cx='27.4' cy='15' rx='3.5' ry='4.7' fill='%23fffaf0' opacity='0.8'/><ellipse cx='27.2' cy='14.4' rx='3.4' ry='4.6' fill='url(%23h)'/><path d='M28.4 15.6 C22.6 9.6 11 8.6 6.6 12.4 C3.6 15 5.2 19.2 10 19.8 L16.4 19.8' fill='none' stroke='%23000' stroke-opacity='0.32' stroke-width='3' filter='url(%23b)' clip-path='url(%23p)'/><path d='M27.4 14.2 C21.4 7.8 10 6.8 5.8 10.8 C3 13.4 4.6 17.6 9.4 18.2 L16.2 18.2' fill='none' stroke='url(%23w)' stroke-width='3' stroke-linecap='round'/><path d='M24.6 10.4 C20 7.4 11.6 7 7.6 9.8' fill='none' stroke='%23fff' stroke-opacity='0.8' stroke-width='0.8' stroke-linecap='round'/><path d='M23.8 15.2 Q27.2 11.6 30.6 15.2 A3.4 4.6 0 0 1 23.8 15.2 Z' fill='%23120e0a'/></svg>") 0 0 / 48px 31px no-repeat space;
+  }
+  /* Show the coil's overhang; a turning page is hidden once it's past the coil */
+  .spread-wrap.mobile {
+    overflow-x: visible;
+    clip-path: inset(-100vh -100vw -100vh -24px);
   }
   /* Gutter: paper dips slightly into shadow along the punched edge */
   .spread-wrap.mobile .mobile-page::after {
