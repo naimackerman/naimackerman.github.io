@@ -70,7 +70,6 @@ body { font-family: 'Newsreader', 'Source Serif 4', Georgia, serif; }
 
 /* ───────────────────── Spread ───────────────────── */
 .spread-wrap {
-  perspective: 2400px;
   position: relative;
   width: calc(var(--page-w) * 2);
   max-width: 100%;
@@ -93,7 +92,7 @@ body { font-family: 'Newsreader', 'Source Serif 4', Georgia, serif; }
   background:
     linear-gradient(90deg, transparent 0%, rgba(0,0,0,0.05) 30%, rgba(0,0,0,0.22) 50%, rgba(0,0,0,0.05) 70%, transparent 100%);
   pointer-events: none;
-  z-index: 7;
+  z-index: 9;
 }
 .spine-shadow::after {
   content: "";
@@ -473,70 +472,111 @@ body { font-family: 'Newsreader', 'Source Serif 4', Georgia, serif; }
 .cover-side.cover-left  .spread { left: 0; }
 .cover-side.cover-right .spread { left: calc(-1 * var(--page-w)); }
 
-/* The flipping leaf — has a front (current page) and back (target page).
-   Front rotates around its left/right edge, dragging the back into view. */
-.flip-leaf {
+/* The turning sheet, folded along a crease (laid out by fold.js each frame).
+   .sheet-front — the part still lying flat, clipped at the crease.
+   .sheet-back  — the folded-over flap: the sheet's other side, reflected across
+                  the crease. Its wrapper carries the shadow the flap casts. */
+.sheet-front,
+.sheet-back {
   position: absolute;
   top: 0;
+  left: 0;
   width: var(--page-w);
   height: 100%;
-  transform-style: preserve-3d;
+  overflow: hidden;
+  background: var(--paper);
   pointer-events: none;
-  z-index: 8;
-  will-change: transform;
 }
-.flip-leaf.dir-next {
-  left: var(--page-w);
-  transform-origin: 0 50%;
-  animation: flipNext 900ms cubic-bezier(.45,.05,.3,1) forwards;
+.sheet-front { z-index: 8; }
+.sheet-back {
+  transform-origin: 0 0;
+  visibility: hidden;
+  will-change: transform, clip-path;
 }
-.flip-leaf.dir-prev {
-  left: 0;
-  transform-origin: 100% 50%;
-  animation: flipPrev 900ms cubic-bezier(.45,.05,.3,1) forwards;
-}
-@keyframes flipNext {
-  0%   { transform: rotateY(0); box-shadow: -20px 0 60px rgba(0,0,0,0); }
-  50%  { box-shadow: 0 0 80px rgba(0,0,0,0.35); }
-  100% { transform: rotateY(-180deg); box-shadow: 20px 0 60px rgba(0,0,0,0); }
-}
-@keyframes flipPrev {
-  0%   { transform: rotateY(0); box-shadow: 20px 0 60px rgba(0,0,0,0); }
-  50%  { box-shadow: 0 0 80px rgba(0,0,0,0.35); }
-  100% { transform: rotateY(180deg); box-shadow: -20px 0 60px rgba(0,0,0,0); }
-}
-
-.leaf-face {
+.sheet-flap {
   position: absolute;
   inset: 0;
-  overflow: hidden;
-  backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
-  background: var(--paper);
+  z-index: 10;              /* above the spine shadow, so a flap crossing it stays lit */
+  pointer-events: none;
+  will-change: filter;
 }
-.leaf-face.back { transform: rotateY(180deg); }
-/* Render the full spread inside the face, translated so only the desired page shows */
-.leaf-face .spread {
+/* A full spread inside a sheet face, shifted so the wanted page shows */
+.sheet-spread {
   position: absolute;
   top: 0;
   width: calc(var(--page-w) * 2);
   height: 100%;
-  filter: none;
 }
-/* For dir-next: front shows current's RIGHT (translate -page-w); back shows target's LEFT (no translate) */
-.flip-leaf.dir-next .leaf-face.front .spread { left: calc(-1 * var(--page-w)); }
-.flip-leaf.dir-next .leaf-face.back  .spread { left: 0; }
-/* For dir-prev: front shows current's LEFT; back shows target's RIGHT */
-.flip-leaf.dir-prev .leaf-face.front .spread { left: 0; }
-.flip-leaf.dir-prev .leaf-face.back  .spread { left: calc(-1 * var(--page-w)); }
+.sheet-front .mobile-spread { filter: none; }
+
+/* Shading strips: left edge on the crease, gradient running away from it */
+.fold-band {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 400vh;
+  opacity: 0;
+  transform-origin: 0 0;
+  pointer-events: none;
+  z-index: 2;
+}
+/* The flap: dark deep in the crease, a sheen where the paper rolls over, fading out */
+.shade-back  { background: linear-gradient(to right, rgba(0,0,0,0.30), rgba(0,0,0,0.08) 8%, rgba(255,250,240,0.16) 22%, rgba(255,250,240,0) 45%, rgba(0,0,0,0.06) 100%); }
+/* The page being uncovered, in the lifted flap's shadow */
+.shade-cast  { background: linear-gradient(to right, rgba(0,0,0,0.45), rgba(0,0,0,0.14) 30%, rgba(0,0,0,0)); }
+.fold-cast {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: var(--page-w);
+  height: 100%;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 7;
+}
+
+/* Blank pages flicking past on a chapter jump, and the back of a phone page */
+.paper-blank {
+  position: absolute;
+  inset: 0;
+  background:
+    repeating-linear-gradient(to bottom, transparent 0 20px, rgba(26,22,18,0.07) 20px 22px) 60px 96px / calc(100% - 120px) calc(100% - 170px) no-repeat,
+    var(--paper);
+  box-shadow: inset 0 0 0 1px var(--paper-edge);
+}
+.spread-wrap.mobile .paper-blank { background: var(--paper-2); }
 
 /* During a flip the base spread shows the TARGET; we hide its non-revealed page until the leaf passes */
 .spread.base.flipping-next .page.left  { visibility: hidden; }
 .spread.base.flipping-prev .page.right { visibility: hidden; }
 
-/* Make box-shadows along the spine softer when the leaf is on top */
-.flip-leaf .page,
+/* No drop shadows on page faces inside a turn — the fold draws its own */
+.sheet-front .page,
+.sheet-back .page,
 .cover-side .page { box-shadow: none !important; }
+
+/* Dog-ear hint: hovering a page edge lifts its bottom corner */
+.page-curl {
+  position: absolute;
+  bottom: 0;
+  width: 0;
+  height: 0;
+  z-index: 12;
+  pointer-events: none;
+  transition: width 0.25s ease, height 0.25s ease;
+}
+.page-curl.right {
+  right: 0;
+  background: linear-gradient(to top left, var(--bookcase) 50%, rgba(0,0,0,0.28) 50%, var(--paper-2) 58%, var(--paper) 100%);
+}
+.page-curl.left {
+  left: 0;
+  background: linear-gradient(to top right, var(--bookcase) 50%, rgba(0,0,0,0.28) 50%, var(--paper-2) 58%, var(--paper) 100%);
+}
+.edge-flip.right:hover ~ .page-curl.right,
+.edge-flip.left:hover ~ .page-curl.left { width: 34px; height: 34px; }
+.spread-wrap.turning .page-curl { display: none; }
+.spread-wrap.turning, .spread-wrap.turning * { cursor: grabbing; }
 
 /* ───────────────────── Nav ───────────────────── */
 .book-nav {
@@ -602,7 +642,7 @@ body { font-family: 'Newsreader', 'Source Serif 4', Georgia, serif; }
   top: 0; bottom: 0;
   width: 60px;
   cursor: pointer;
-  z-index: 8;
+  z-index: 11;
 }
 .edge-flip.left  { left: -50px; }
 .edge-flip.right { right: -50px; }
@@ -719,7 +759,8 @@ body { font-family: 'Newsreader', 'Source Serif 4', Georgia, serif; }
 /* Driven by JS: <div class="mobile-spread" data-show="left|right"> */
 .spread-wrap.mobile {
   width: var(--page-w);
-  overflow: hidden;
+  overflow-x: clip;          /* a turned page leaves off the left edge */
+  touch-action: pan-y;       /* horizontal drags turn the page */
 }
 .mobile-page {
   position: relative;
@@ -735,16 +776,6 @@ body { font-family: 'Newsreader', 'Source Serif 4', Georgia, serif; }
 }
 .mobile-spread[data-show="left"]  .page.right { display: none; }
 .mobile-spread[data-show="right"] .page.left  { display: none; }
-
-.mobile-shadow {
-  /* hide centered spine shadow in mobile */
-  display: none;
-}
-
-@keyframes slideInNext { from { transform: translateX(40%); opacity: 0.2; } to { transform: none; opacity: 1; } }
-@keyframes slideInPrev { from { transform: translateX(-40%); opacity: 0.2; } to { transform: none; opacity: 1; } }
-.slide-next { animation: slideInNext 0.45s cubic-bezier(.25,.7,.3,1) both; }
-.slide-prev { animation: slideInPrev 0.45s cubic-bezier(.25,.7,.3,1) both; }
 
 @media (max-width: 1080px) {
   :root {
@@ -1185,10 +1216,6 @@ a.gh-card:hover, .gh-card[role="button"]:hover {
 
 /* ───────────────────── Reduced motion ───────────────────── */
 @media (prefers-reduced-motion: reduce) {
-  .flip-leaf.dir-next, .flip-leaf.dir-prev,
-  .slide-next, .slide-prev {
-    animation: none;
-  }
   * {
     transition-duration: 0.01ms !important;
   }
@@ -1225,4 +1252,35 @@ a.gh-card:hover, .gh-card[role="button"]:hover {
 .org-logo-lg:hover {
   filter: none;
   mix-blend-mode: normal;
+}
+
+/* ── Spiral binding (single-page view at tablet widths) ──
+   A wire coil runs down the hinge edge: each loop comes up out of a punched
+   hole, wraps round the page edge and disappears underneath. It sits above
+   the turning page, so pages swing off it like a notepad. */
+.spiral-binding { display: none; }
+@media (min-width: 701px) and (max-width: 1080px) {
+  .spiral-binding {
+    display: block;
+    position: absolute;
+    top: 14px;
+    bottom: 14px;
+    left: -19px;              /* 19px of coil overhangs the edge (the tile's page edge, x = 16, scaled ×1.2) */
+    width: 48px;
+    z-index: 13;
+    pointer-events: none;
+    background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='40' height='26' viewBox='0 0 40 26'><defs><linearGradient id='w' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='%23fbfbf9'/><stop offset='0.35' stop-color='%23d6d6d2'/><stop offset='0.7' stop-color='%239b9b97'/><stop offset='1' stop-color='%2364645f'/></linearGradient><radialGradient id='h' cx='0.45' cy='0.35' r='0.7'><stop offset='0' stop-color='%230e0b08'/><stop offset='1' stop-color='%233a3128'/></radialGradient><clipPath id='p'><rect x='16' y='0' width='24' height='26'/></clipPath><filter id='b' x='-20%' y='-40%' width='140%' height='180%'><feGaussianBlur stdDeviation='0.9'/></filter></defs><ellipse cx='27.4' cy='15' rx='3.5' ry='4.7' fill='%23fffaf0' opacity='0.8'/><ellipse cx='27.2' cy='14.4' rx='3.4' ry='4.6' fill='url(%23h)'/><path d='M28.4 15.6 C22.6 9.6 11 8.6 6.6 12.4 C3.6 15 5.2 19.2 10 19.8 L16.4 19.8' fill='none' stroke='%23000' stroke-opacity='0.32' stroke-width='3' filter='url(%23b)' clip-path='url(%23p)'/><path d='M27.4 14.2 C21.4 7.8 10 6.8 5.8 10.8 C3 13.4 4.6 17.6 9.4 18.2 L16.2 18.2' fill='none' stroke='url(%23w)' stroke-width='3' stroke-linecap='round'/><path d='M24.6 10.4 C20 7.4 11.6 7 7.6 9.8' fill='none' stroke='%23fff' stroke-opacity='0.8' stroke-width='0.8' stroke-linecap='round'/><path d='M23.8 15.2 Q27.2 11.6 30.6 15.2 A3.4 4.6 0 0 1 23.8 15.2 Z' fill='%23120e0a'/></svg>") 0 0 / 48px 31px no-repeat space;
+  }
+  /* Gutter: paper dips slightly into shadow along the punched edge */
+  .spread-wrap.mobile .mobile-page::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 34px;
+    background: linear-gradient(to right, rgba(60,45,30,0.14), rgba(60,45,30,0.04) 60%, transparent);
+    pointer-events: none;
+    z-index: 4;
+  }
 }

@@ -1,9 +1,10 @@
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import React, { createContext, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { castShadow, constrain, foldSheet } from "./fold";
 
-// Book engine: 3D page-flip, keyboard nav, URL hash sync, touch swipe, mobile single-page.
+// Book engine: paper-fold page turns (click, key or drag), URL hash sync, mobile single-page.
 
 export const BookCtx = createContext({});
-const FLIP_MS = 900;
+const TURN_MS = 900;
 const CV_URL = new URL("../../CV-Nur Ahmad Khatim.pdf", import.meta.url).href;
 
 // ─── Primitives ──────────────────────────────────────────────────────────────
@@ -192,6 +193,36 @@ function useIsMobile() {
   return m;
 }
 
+// ─── Page-turn engine ───────────────────────────────────────────────────────
+// The page folds along a crease (see fold.js). The live geometry sits in a ref
+// and is drawn straight onto the DOM each frame, so the paper can follow the
+// pointer without re-rendering React.
+
+const easeInOut = (k) => k < 0.5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2;
+const easeOut = (k) => 1 - Math.pow(1 - k, 3);
+const clamp01 = (v) => Math.min(1, Math.max(0, v));
+const NO_DRAG = "a, button, input, textarea, select, iframe, label, [contenteditable]";
+const CORNER_LIFT = 0.16; // how high a clicked page's corner rises mid-turn, × page height
+const GRIP = 0.2; // width of the draggable outer edge, × page width
+
+// One turning sheet: the part still lying flat, and the folded-over flap
+// showing the sheet's back. `nodes` collects the DOM nodes foldSheet() moves.
+function Sheet({ nodes, front, back }) {
+  return (
+    <>
+      <div className="sheet-front" ref={(el) => nodes.front = el}>
+        {front || <div className="paper-blank" />}
+      </div>
+      <div className="sheet-flap" ref={(el) => nodes.flap = el}>
+        <div className="sheet-back" ref={(el) => nodes.back = el}>
+          {back || <div className="paper-blank" />}
+          <div className="fold-band shade-back" ref={(el) => nodes.backShade = el} />
+        </div>
+      </div>
+    </>);
+
+}
+
 // ─── Book shell ─────────────────────────────────────────────────────────────
 
 export function Book({ chapters }) {
@@ -213,8 +244,91 @@ export function Book({ chapters }) {
   });
   // Mobile: which page of the spread is showing — "left" or "right"
   const [mPage, setMPage] = useState("left");
-  // Active flip: { idx, dir: "next"|"prev" } or null
-  const [flip, setFlip] = useState(null);
+  // Active turn: { idx, mPage, dir: "next"|"prev", skip } or null.
+  // skip = extra blank leaves riffled past when jumping several spreads.
+  const [turn, setTurn] = useState(null);
+  const turnRef = useRef(null);
+  const wrapRef = useRef(null);
+  const rafRef = useRef(0);
+  // Live fold: { W, H, spineX, s, P0, P, fromTurned, t, path }
+  //   P0 = the point of the sheet being pulled, P = where it is now (leaf coords).
+  //   fromTurned: the sheet starts folded away and comes back (mobile, turning back).
+  const foldRef = useRef(null);
+  const sheetNodes = useRef({});
+  const ghostNodes = useRef([]);
+  const castBox = useRef(null);
+  const castStrip = useRef(null);
+
+  const draw = useCallback(() => {
+    const f = foldRef.current;
+    if (!f || !sheetNodes.current.front) return;
+    const liftOf = (P) => Math.sin(Math.PI * clamp01((f.P0.x - P.x) / (2 * f.P0.x)));
+    const crease = foldSheet(sheetNodes.current, { ...f, lift: liftOf(f.P) });
+    castShadow(castBox.current, castStrip.current, crease, f.W);
+    // Riffled blank leaves run ahead of the real one (the first lands first, underneath)
+    const ghosts = ghostNodes.current;
+    ghosts.forEach((nodes, i) => {
+      if (!nodes.front || !f.path) return;
+      const P = f.path(clamp01(f.t * (1 + 0.22 * (ghosts.length - i))));
+      foldSheet(nodes, { ...f, P, lift: liftOf(P) });
+    });
+  }, []);
+
+  // Run frame(k) for k: 0 → 1 over `dur` ms, drawing each frame, then done().
+  const animate = useCallback((dur, frame, done) => {
+    cancelAnimationFrame(rafRef.current);
+    if (reducedMotion) dur = 0;
+    const t0 = performance.now();
+    const step = (now) => {
+      const k = dur ? Math.min(1, (now - t0) / dur) : 1;
+      frame(k);
+      draw();
+      if (k < 1) rafRef.current = requestAnimationFrame(step);else
+      done();
+    };
+    rafRef.current = requestAnimationFrame(step);
+  }, [reducedMotion, draw]);
+
+  const startTurn = useCallback((t, fold) => {
+    cancelAnimationFrame(rafRef.current);
+    ghostNodes.current = Array.from({ length: t.skip }, () => ({}));
+    foldRef.current = fold;
+    turnRef.current = t;
+    setTurn(t);
+  }, []);
+
+  const endTurn = useCallback((landed) => {
+    cancelAnimationFrame(rafRef.current);
+    const t = turnRef.current;
+    turnRef.current = null;
+    foldRef.current = null;
+    setTurn(null);
+    if (landed && t) {setIdx(t.idx);setMPage(t.mPage);}
+  }, []);
+
+  // Let a dragged page go: glide to fully turned or back to flat.
+  const release = useCallback((land) => {
+    const f = foldRef.current;if (!f) return;
+    const turned = { x: -f.P0.x, y: f.P0.y };
+    const goal = land !== f.fromTurned ? turned : f.P0;
+    const from = { ...f.P };
+    const dist = Math.hypot(goal.x - from.x, goal.y - from.y);
+    animate(TURN_MS * Math.max(0.3, Math.min(1, dist / (2 * f.W))), (k) => {
+      const e = easeOut(k);
+      f.P = constrain({ x: from.x + (goal.x - from.x) * e, y: from.y + (goal.y - from.y) * e }, f.P0, f.H);
+    }, () => endTurn(land));
+  }, [animate, endTurn]);
+
+  // Wrap size → fold frame. Desktop folds about the centre spine; mobile about the left edge.
+  const measure = (dir) => {
+    const r = wrapRef.current.getBoundingClientRect();
+    if (isMobile) return { W: r.width, H: r.height, spineX: 0, s: 1, left: r.left, top: r.top };
+    return { W: r.width / 2, H: r.height, spineX: r.width / 2, s: dir === "next" ? 1 : -1, left: r.left, top: r.top };
+  };
+
+  useLayoutEffect(() => {if (turn) draw();}, [turn, draw]);
+  useEffect(() => () => cancelAnimationFrame(rafRef.current), []);
+  useEffect(() => endTurn(false), [isMobile, endTurn]);
 
   // URL hash sync
   useEffect(() => {
@@ -227,59 +341,54 @@ export function Book({ chapters }) {
   useEffect(() => {
     const onHash = () => {
       const i = flat.findIndex((s) => s.key === window.location.hash.slice(1));
-      if (i >= 0 && i !== idx) {setIdx(i);setMPage("left");setFlip(null);}
+      if (i >= 0 && i !== idx) {endTurn(false);setIdx(i);setMPage("left");}
     };
     window.addEventListener("hashchange", onHash);
     return () => window.removeEventListener("hashchange", onHash);
-  }, [flat, idx]);
+  }, [flat, idx, endTurn]);
 
-  // Commit the flip after the animation
-  useEffect(() => {
-    if (!flip) return;
-    const t = setTimeout(() => {
-      setIdx(flip.idx);
-      setFlip(null);
-      setMPage("left");
-    }, FLIP_MS);
-    return () => clearTimeout(t);
-  }, [flip]);
-
-  const canNext = idx < flat.length - 1;
+  const last = flat.length - 1;
+  const canNext = idx < last;
   const canPrev = idx > 0;
 
-  const next = useCallback(() => {
-    if (flip) return;
+  // Where one page turn in `dir` lands — a spread on desktop, a page on mobile.
+  const targetOf = (dir) => {
     if (isMobile) {
-      // On mobile, first advance left → right, then flip spread
-      if (mPage === "left") {setMPage("right");return;}
-      if (canNext) {setIdx(idx + 1);setMPage("left");}
-      return;
+      if (dir === "next") return mPage === "left" ? { idx, mPage: "right" } : canNext ? { idx: idx + 1, mPage: "left" } : null;
+      return mPage === "right" ? { idx, mPage: "left" } : canPrev ? { idx: idx - 1, mPage: "right" } : null;
     }
-    if (!canNext) return;
-    if (reducedMotion) {setIdx(idx + 1);setMPage("left");return;}
-    setFlip({ idx: idx + 1, dir: "next" });
-  }, [flip, isMobile, mPage, canNext, idx, reducedMotion]);
+    const i = idx + (dir === "next" ? 1 : -1);
+    return i >= 0 && i <= last ? { idx: i, mPage: "left" } : null;
+  };
 
-  const prev = useCallback(() => {
-    if (flip) return;
-    if (isMobile) {
-      if (mPage === "right") {setMPage("left");return;}
-      if (canPrev) {setIdx(idx - 1);setMPage("right");}
-      return;
-    }
-    if (!canPrev) return;
-    if (reducedMotion) {setIdx(idx - 1);setMPage("left");return;}
-    setFlip({ idx: idx - 1, dir: "prev" });
-  }, [flip, isMobile, mPage, canPrev, idx, reducedMotion]);
+  // A clicked turn pulls the bottom corner over in an arc, the way a hand would.
+  const turnTo = (target, dir, skip = 0) => {
+    if (turnRef.current || !target) return;
+    const g = measure(dir);
+    const P0 = { x: g.W, y: g.H };
+    const fromTurned = isMobile && dir === "prev";
+    const path = (t) => {
+      const u = fromTurned ? 1 - t : t;
+      return constrain({ x: g.W - 2 * g.W * u, y: g.H * (1 - CORNER_LIFT * Math.sin(Math.PI * u)) }, P0, g.H);
+    };
+    const fold = { ...g, P0, fromTurned, t: 0, path, P: path(0) };
+    startTurn({ ...target, dir, skip }, fold);
+    animate(TURN_MS * (skip ? 1.25 : 1), (k) => {fold.t = easeInOut(k);fold.P = path(fold.t);}, () => endTurn(true));
+  };
+  const next = () => turnTo(targetOf("next"), "next");
+  const prev = () => turnTo(targetOf("prev"), "prev");
+  const jumpTo = (i) => {
+    if (i === idx || i < 0 || i > last) return;
+    const skip = isMobile ? 0 : Math.min(3, Math.abs(i - idx) - 1);
+    turnTo({ idx: i, mPage: "left" }, i > idx ? "next" : "prev", skip);
+  };
 
-  const goto = useCallback((id) => {
+  const goto = (id) => {
     const i = flat.findIndex((s) => s.chapter.id === id || s.key === id);
     if (i < 0 || i === idx) return;
-    setFlip(null);
-    setIdx(i);
-    setMPage("left");
+    jumpTo(i);
     window.scrollTo({ top: 0, behavior: "smooth" });
-  }, [flat, idx]);
+  };
 
   // Keyboard
   useEffect(() => {
@@ -287,30 +396,89 @@ export function Book({ chapters }) {
       if (e.target.matches("input, textarea")) return;
       if (e.key === "ArrowRight" || e.key === " ") {e.preventDefault();next();} else
       if (e.key === "ArrowLeft") {e.preventDefault();prev();} else
-      if (e.key === "Home") {setIdx(0);setMPage("left");setFlip(null);} else
-      if (e.key === "End") {setIdx(flat.length - 1);setMPage("left");setFlip(null);}
+      if (e.key === "Home") jumpTo(0);else
+      if (e.key === "End") jumpTo(last);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [next, prev, flat.length]);
+  });
 
-  // Touch swipe
-  const wrapRef = useRef(null);
+  // Grab the paper anywhere and pull — the point you grabbed stays under the
+  // pointer and the page folds to match. Let go past a third of the way (or
+  // flick) and it turns; otherwise it settles back.
+  const live = useRef(null);
+  live.current = { targetOf, isMobile, measure };
   useEffect(() => {
     const el = wrapRef.current;if (!el) return;
-    let startX = 0,startY = 0,t = 0;
-    const ts = (e) => {const tt = e.touches[0];startX = tt.clientX;startY = tt.clientY;t = Date.now();};
-    const te = (e) => {
-      const tt = e.changedTouches[0];
-      const dx = tt.clientX - startX,dy = tt.clientY - startY,dt = Date.now() - t;
-      if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.4 && dt < 700) {
-        if (dx < 0) next();else prev();
-      }
+    let g = null;
+
+    const down = (e) => {
+      if (turnRef.current || e.button > 0 || e.target.closest(NO_DRAG)) return;
+      // Only the outer edge of a page is a grip, like a thumb at the fore-edge
+      // (on a phone, the left edge pulls the previous page back in).
+      const r = el.getBoundingClientRect();
+      const pageW = live.current.isMobile ? r.width : r.width / 2;
+      const grip = Math.max(48, pageW * GRIP);
+      const dir = e.clientX > r.right - grip ? "next" : e.clientX < r.left + grip ? "prev" : null;
+      if (!dir) return;
+      if (e.pointerType === "mouse") e.preventDefault(); // no text selection from the grip
+      g = { id: e.pointerId, x: e.clientX, y: e.clientY, dir, started: false, lx: e.clientX, lt: e.timeStamp, v: 0 };
     };
-    el.addEventListener("touchstart", ts, { passive: true });
-    el.addEventListener("touchend", te, { passive: true });
-    return () => {el.removeEventListener("touchstart", ts);el.removeEventListener("touchend", te);};
-  }, [next, prev]);
+
+    const move = (e) => {
+      if (!g || e.pointerId !== g.id) return;
+      const dx = e.clientX - g.x,dy = e.clientY - g.y;
+      if (!g.started) {
+        if (Math.abs(dy) > 14 && Math.abs(dy) > Math.abs(dx)) {g = null;return;}
+        if (Math.abs(dx) < 8) return;
+        const dir = g.dir;
+        const target = dir === "next" === dx < 0 ? live.current.targetOf(dir) : null;
+        if (!target) {g = null;return;}
+        const m = live.current.measure(dir);
+        const fromTurned = live.current.isMobile && dir === "prev";
+        const gy = Math.min(m.H, Math.max(0, g.y - m.top));
+        // On a phone, turning back pulls the previous page's outer edge in from the spine.
+        const P0 = fromTurned ? { x: m.W, y: gy } : { x: Math.max(4, m.s * (g.x - m.left - m.spineX)), y: gy };
+        g.dir = dir;
+        g.started = true;
+        g.fold = { ...m, P0, fromTurned, t: 0, path: null, P: fromTurned ? { x: -m.W, y: gy } : P0 };
+        try {el.setPointerCapture(e.pointerId);} catch {/* pointer already gone */}
+        window.getSelection()?.removeAllRanges();
+        startTurn({ ...target, dir, skip: 0 }, g.fold);
+      }
+      const f = g.fold;
+      const want = f.fromTurned ?
+      { x: -f.W + 2 * dx, y: f.P0.y + dy * 0.5 } :
+      { x: f.P0.x + f.s * dx, y: f.P0.y + dy };
+      f.P = constrain(want, f.P0, f.H);
+      draw();
+      g.v = (e.clientX - g.lx) / Math.max(16, e.timeStamp - g.lt); // px/ms
+      g.lx = e.clientX;g.lt = e.timeStamp;
+    };
+
+    const up = (e) => {
+      if (!g || e.pointerId !== g.id) return;
+      const done = g;g = null;
+      if (!done.started) return;
+      if (e.timeStamp - done.lt > 100) done.v = 0; // held still before letting go
+      const f = done.fold;
+      const toward = (done.dir === "next" ? -done.v : done.v) > 0.45;
+      const away = (done.dir === "next" ? done.v : -done.v) > 0.45;
+      const progress = f.fromTurned ? (f.P.x + f.W) / (2 * f.W) : (f.P0.x - f.P.x) / (2 * f.P0.x);
+      release(e.type !== "pointercancel" && !away && (toward || progress > 0.33));
+    };
+
+    el.addEventListener("pointerdown", down);
+    el.addEventListener("pointermove", move);
+    el.addEventListener("pointerup", up);
+    el.addEventListener("pointercancel", up);
+    return () => {
+      el.removeEventListener("pointerdown", down);
+      el.removeEventListener("pointermove", move);
+      el.removeEventListener("pointerup", up);
+      el.removeEventListener("pointercancel", up);
+    };
+  }, [isMobile, startTurn, draw, release]);
 
   // Footnote click flash
   useEffect(() => {
@@ -330,101 +498,98 @@ export function Book({ chapters }) {
     return () => document.removeEventListener("click", onClick);
   }, []);
 
-  useEffect(() => {window.__bookGoto = goto;}, [goto]);
+  useEffect(() => {window.__bookGoto = goto;});
 
   const cur = flat[idx];
-  const tgt = flip ? flat[flip.idx] : null;
+  const tgt = turn ? flat[turn.idx] : null;
   const ch = cur.chapter;
+  const spreadOf = (sp, i) =>
+  <SpreadFor sp={sp} idx={i} goto={goto} spreadState={spreadState} updateSpreadState={updateSpreadState} />;
+  const cast =
+  <div className="fold-cast" ref={castBox}><div className="fold-band shade-cast" ref={castStrip} /></div>;
 
-  // Mobile mode: just render the current page with simple sliding transitions
+
   if (isMobile) {
     return (
       <MobileBook
-        cur={cur} idx={idx} mPage={mPage}
+        cur={cur} tgt={tgt} idx={idx} mPage={mPage} turn={turn}
         next={next} prev={prev} goto={goto}
         canNext={canNext} canPrev={canPrev}
         chapters={chapters} flat={flat}
-        wrapRef={wrapRef}
-        spreadState={spreadState}
-        updateSpreadState={updateSpreadState} />);
+        wrapRef={wrapRef} sheetNodes={sheetNodes} cast={cast}
+        spreadOf={spreadOf} />);
 
 
   }
+
+  // One page of a spread, cut out for a sheet face
+  const half = (sp, i, side) =>
+  <div className="spread sheet-spread" style={{ left: side === "right" ? "calc(-1 * var(--page-w))" : 0 }}>{spreadOf(sp, i)}</div>;
+
 
   return (
     <div className="book-app">
       <div className="topbar">
         <span>NURAHMADKHATIM.GITHUB.IO · <a href="#cover-0" onClick={(e) => {e.preventDefault();goto("cover");}}>contents</a> · <a href="#correspondence-0" onClick={(e) => {e.preventDefault();goto("correspondence");}}>say hi</a> · <a className="cv-link" href={CV_URL} target="_blank" rel="noopener noreferrer">cv ↓</a></span>
-        <span>{ch.id !== "cover" ? ch.roman : "—"} &nbsp;·&nbsp; spread {idx + 1} of {flat.length} &nbsp;·&nbsp; <span className="kbd">←</span> <span className="kbd">→</span> &nbsp;or swipe</span>
+        <span>{ch.id !== "cover" ? ch.roman : "—"} &nbsp;·&nbsp; spread {idx + 1} of {flat.length} &nbsp;·&nbsp; <span className="kbd">←</span> <span className="kbd">→</span> &nbsp;or pull a page</span>
       </div>
 
-      <div className="spread-wrap" ref={wrapRef}>
-        {/* BASE: shows target during flip, else current */}
-        <div className={"spread base " + (flip ? `flipping-${flip.dir}` : "")}>
-          <SpreadFor sp={flip ? tgt : cur} idx={flip ? flip.idx : idx} goto={goto} spreadState={spreadState} updateSpreadState={updateSpreadState} />
+      <div className={"spread-wrap" + (turn ? " turning" : "")} ref={wrapRef}>
+        {/* BASE: shows target during a turn, else current */}
+        <div className={"spread base " + (turn ? `flipping-${turn.dir}` : "")}>
+          {spreadOf(turn ? tgt : cur, turn ? turn.idx : idx)}
         </div>
 
         {/* Spine shadow centered */}
         <div className="spine-shadow" />
 
-        {flip &&
+        {turn &&
         <>
-            {/* The still-visible half of the CURRENT spread */}
-            <div className={`cover-side cover-${flip.dir === "next" ? "left" : "right"}`}>
-              <div className="spread">
-                <SpreadFor sp={cur} idx={idx} goto={goto} spreadState={spreadState} updateSpreadState={updateSpreadState} />
-              </div>
+            {/* The page the turning sheet will land on, still showing the CURRENT spread */}
+            <div className={`cover-side cover-${turn.dir === "next" ? "left" : "right"}`}>
+              <div className="spread">{spreadOf(cur, idx)}</div>
             </div>
 
-            {/* The flipping leaf */}
-            <div className={`flip-leaf dir-${flip.dir}`}>
-              <div className="leaf-face front">
-                <div className="spread">
-                  <SpreadFor sp={cur} idx={idx} goto={goto} spreadState={spreadState} updateSpreadState={updateSpreadState} />
-                </div>
-              </div>
-              <div className="leaf-face back">
-                <div className="spread">
-                  <SpreadFor sp={tgt} idx={flip.idx} goto={goto} spreadState={spreadState} updateSpreadState={updateSpreadState} />
-                </div>
-              </div>
-            </div>
+            {cast}
+
+            {ghostNodes.current.map((nodes, k) => <Sheet key={k} nodes={nodes} />)}
+
+            <Sheet
+            nodes={sheetNodes.current}
+            front={half(cur, idx, turn.dir === "next" ? "right" : "left")}
+            back={half(tgt, turn.idx, turn.dir === "next" ? "left" : "right")} />
           </>
         }
 
-        <div className="edge-flip left" onClick={prev} title="previous page (←)" />
-        <div className="edge-flip right" onClick={next} title="next page (→)" />
+        <div className="edge-flip left" onClick={prev} title="previous page (←) — or pull the page" />
+        <div className="edge-flip right" onClick={next} title="next page (→) — or pull the page" />
+        <div className="page-curl left" />
+        <div className="page-curl right" />
       </div>
 
       <div className="book-nav">
-        <div><button className="btn" onClick={prev} disabled={!canPrev || !!flip}>← previous</button></div>
+        <div><button className="btn" onClick={prev} disabled={!canPrev || !!turn}>← previous</button></div>
         <div className="center">
           {ch.id === "cover" ? "open the book →" : <ChapterScrubber chapters={chapters} currentId={ch.id} goto={goto} />}
         </div>
-        <div className="right"><button className="btn" onClick={next} disabled={!canNext || !!flip}>next →</button></div>
+        <div className="right"><button className="btn" onClick={next} disabled={!canNext || !!turn}>next →</button></div>
       </div>
     </div>);
 
 }
 
-// ─── Mobile book — single page, slide-in transitions ────────────────────────
+// ─── Mobile book — one page at a time, hinged on the left like a paperback ──
 
-function MobileBook({ cur, idx, mPage, next, prev, goto, canNext, canPrev, chapters, flat, wrapRef, spreadState, updateSpreadState }) {
+function MobileBook({ cur, tgt, idx, mPage, turn, next, prev, goto, canNext, canPrev, chapters, flat, wrapRef, sheetNodes, cast, spreadOf }) {
   const ch = cur.chapter;
+  const page = (sp, i, side) =>
+  <div className="spread mobile-spread" data-show={side}>{spreadOf(sp, i)}</div>;
 
-  // For the slide animation, track key change
-  const [slideKey, setSlideKey] = useState(`${idx}-${mPage}`);
-  const [slideDir, setSlideDir] = useState("next");
-  const prevRef = useRef({ idx, mPage });
-  useEffect(() => {
-    const p = prevRef.current;
-    if (p.idx !== idx || p.mPage !== mPage) {
-      const forward = idx > p.idx || idx === p.idx && mPage === "right";
-      setSlideDir(forward ? "next" : "prev");
-      setSlideKey(`${idx}-${mPage}`);
-      prevRef.current = { idx, mPage };
-    }
-  }, [idx, mPage]);
+  const here = page(cur, idx, mPage);
+  const there = turn && page(tgt, turn.idx, turn.mPage);
+  // Turning forward folds the current page off the next; turning back lays the previous page over this one.
+  const under = turn?.dir === "next" ? there : here;
+  const leaf = turn && (turn.dir === "next" ? here : there);
 
   return (
     <div className="book-app">
@@ -433,21 +598,24 @@ function MobileBook({ cur, idx, mPage, next, prev, goto, canNext, canPrev, chapt
         <span>{ch.id !== "cover" ? ch.roman : "—"} &nbsp;·&nbsp; {idx + 1}/{flat.length} · {mPage}</span>
       </div>
 
-      <div className="spread-wrap mobile" ref={wrapRef}>
-        <div key={slideKey} className={"mobile-page slide-" + slideDir}>
-          <div className="spread mobile-spread" data-show={mPage}>
-            <SpreadFor sp={cur} idx={idx} goto={goto} spreadState={spreadState} updateSpreadState={updateSpreadState} />
-          </div>
-          <div className="spine-shadow mobile-shadow" />
-        </div>
+      <div className={"spread-wrap mobile" + (turn ? " turning" : "")} ref={wrapRef}>
+        <div className="mobile-page">{under}</div>
+        {turn &&
+        <>
+            {cast}
+            <Sheet nodes={sheetNodes.current} front={leaf} />
+          </>
+        }
+        {/* Wire coil down the hinge edge — shown at tablet widths (see book.css) */}
+        <div className="spiral-binding" aria-hidden="true" />
       </div>
 
       <div className="book-nav">
-        <div><button className="btn" onClick={prev} disabled={!canPrev && mPage === "left"}>← back</button></div>
+        <div><button className="btn" onClick={prev} disabled={!canPrev && mPage === "left" || !!turn}>← back</button></div>
         <div className="center">
-          {ch.id === "cover" ? "swipe to open →" : <ChapterScrubber chapters={chapters} currentId={ch.id} goto={goto} />}
+          {ch.id === "cover" ? "swipe to turn →" : <ChapterScrubber chapters={chapters} currentId={ch.id} goto={goto} />}
         </div>
-        <div className="right"><button className="btn" onClick={next} disabled={!canNext && mPage === "right"}>next →</button></div>
+        <div className="right"><button className="btn" onClick={next} disabled={!canNext && mPage === "right" || !!turn}>next →</button></div>
       </div>
     </div>);
 
