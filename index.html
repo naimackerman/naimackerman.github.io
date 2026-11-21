@@ -6,7 +6,7 @@
     <title>Nur Ahmad Khatim | Software Engineer & AI Healthcare Researcher</title>
     <meta
       name="description"
-      content="Personal website of Nur Ahmad Khatim, a software engineer and AI healthcare researcher based in Jakarta, Indonesia. Read about his projects, research, teaching, awards, and current work."
+      content="Personal website of Nur Ahmad Khatim (Naim), a software engineer and clinical-AI researcher — MEXT Scholar at NAIST, Japan. Career, publications, honors and contact."
     />
     <meta
       name="keywords"
@@ -25,7 +25,7 @@
     <meta property="og:title" content="Nur Ahmad Khatim | Software Engineer & AI Healthcare Researcher" />
     <meta
       property="og:description"
-      content="A personal website-as-book about building software, researching AI in healthcare, teaching, awards, and current work."
+      content="A personal website-as-book about building software, researching clinical AI, honors, and how to get in touch."
     />
     <meta property="og:url" content="https://nurahmadkhatim.github.io/" />
     <meta property="og:image" content="https://nurahmadkhatim.github.io/og-image.png" />
@@ -40,7 +40,7 @@
     <meta name="twitter:title" content="Nur Ahmad Khatim | Software Engineer & AI Healthcare Researcher" />
     <meta
       name="twitter:description"
-      content="A personal website-as-book about building software, researching AI in healthcare, teaching, awards, and current work."
+      content="A personal website-as-book about building software, researching clinical AI, honors, and how to get in touch."
     />
     <meta name="twitter:image" content="https://nurahmadkhatim.github.io/og-image.png" />
     <meta name="twitter:image:alt" content="Nur Ahmad Khatim personal website preview" />
@@ -52,9 +52,9 @@
         "name": "Nur Ahmad Khatim",
         "alternateName": "Naim",
         "url": "https://nurahmadkhatim.github.io/",
-        "image": "https://nurahmadkhatim.github.io/images/foto-naim-3.png",
+        "image": "https://nurahmadkhatim.github.io/images/naim-autumn.jpeg",
         "jobTitle": "Software Engineer",
-        "description": "Software engineer and AI healthcare researcher based in Jakarta, Indonesia.",
+        "description": "Software engineer and clinical-AI researcher; MEXT Scholar at the Nara Institute of Science and Technology.",
         "alumniOf": {
           "@type": "CollegeOrUniversity",
           "name": "Sepuluh Nopember Institute of Technology"
@@ -97,44 +97,78 @@
       async
       defer
     ></script>
+    <style>
+      /* Pre-JS snapshot only (gone once React mounts) — a single page of the book on the desk. */
+      body:has(.snapshot) { margin: 0; background: #12100d; }
+      .snapshot {
+        min-height: 100vh;
+        box-sizing: border-box;
+        padding: 40px 16px;
+        background: radial-gradient(ellipse at 50% 60%, #1f1c17 0, #12100d 90%);
+        font-family: 'Newsreader', Georgia, serif;
+        color: #1a1612;
+      }
+      .snapshot-page {
+        max-width: 640px;
+        margin: 0 auto;
+        padding: 48px clamp(20px, 6vw, 56px) 40px;
+        background: #f4ecdc;
+        box-shadow: 0 30px 50px rgba(0, 0, 0, 0.45);
+        line-height: 1.65;
+        font-size: 16px;
+      }
+      .snapshot-kicker { margin: 0 0 8px; font-size: 12px; letter-spacing: 0.22em; text-transform: uppercase; color: #8a7a6b; }
+      .snapshot h1 { margin: 0; font-size: clamp(36px, 8vw, 52px); line-height: 0.95; letter-spacing: -0.02em; font-weight: 600; }
+      .snapshot h1 span { color: #c45d3a; }
+      .snapshot-lede { margin: 14px 0 0; font-style: italic; color: #3d342a; }
+      .snapshot-lede em { font-style: normal; }
+      .snapshot h2 { margin: 28px 0 8px; padding-top: 18px; border-top: 1px solid rgba(0, 0, 0, 0.14); font-size: 22px; font-weight: 600; }
+      .snapshot p { margin: 0 0 10px; color: #3d342a; }
+      .snapshot a { color: #1a1612; text-decoration-color: #c45d3a; text-underline-offset: 3px; }
+      .snapshot a:hover { color: #c45d3a; }
+      .snapshot-contact { margin: 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; gap: 6px 18px; }
+      .snapshot-note { font-size: 14px; font-style: italic; }
+    </style>
   </head>
 
   <body>
     <div id="root">
-      <!-- Static snapshot for crawlers & link previews; React replaces this on mount. -->
-      <main style="max-width: 720px; margin: 0 auto; padding: 48px 24px; font-family: Georgia, serif; color: #1a1612; background: #f4ecdc;">
-        <h1>Nur Ahmad Khatim</h1>
-        <p><em>Also known as Naim.</em> Software engineer and AI healthcare researcher based in Jakarta, Indonesia. This site is a small book about building things, researching things, and thinking out loud.</p>
+      <!-- Static snapshot for slow connections, crawlers & link previews; React replaces this on mount.
+           Keep it in step with the site's own copy (src/profile/Profile.jsx). -->
+      <div class="snapshot">
+        <main class="snapshot-page">
+          <p class="snapshot-kicker">volume one · a brief book about me</p>
+          <h1><span>N</span>ur <span>A</span>hmad Khat<span>im</span></h1>
+          <p class="snapshot-lede">
+            <em>Also known as Naim.</em> Software engineer &amp; clinical-AI researcher — MEXT Scholar at the
+            Nara Institute of Science and Technology (from Oct 2026) and research assistant at the KFUPM AI V&amp;V Lab.
+          </p>
 
-        <h2>About</h2>
-        <p>
-          I graduated in Informatics Engineering from Sepuluh Nopember Institute of Technology (ITS) in Surabaya.
-          I worked at DataOn (HRIS, 2023–2025), contributed remotely to the Stanford Intelligent Systems Laboratory (SISL),
-          and freelanced for Suitmedia (2022–2023). Along the way I taught data structures and ran trainings for the
-          student association. I'm working toward becoming a full-time researcher in clinical AI.
-        </p>
+          <h2>About</h2>
+          <p>
+            Hi — I'm Naim. I write software and do research for a living. I'm pursuing a master's degree through
+            the MEXT Scholarship at NAIST in Japan, where I'll work on mathematical modelling and clinical-AI research.
+          </p>
+          <p>
+            I graduated in Informatics Engineering from Sepuluh Nopember Institute of Technology in Surabaya, worked at
+            DataOn (2023–2025), contributed remotely to the Stanford Intelligent Systems Lab (2023–2024), and freelanced
+            for the digital agency Suitmedia before that (2022–2023). Along the way I taught data structures and ran
+            trainings for the student association.
+          </p>
 
-        <h2>Selected publications</h2>
-        <ul>
-          <li><a href="https://arxiv.org/abs/2604.23435">Knee-xRAI: An Explainable AI Framework for Automatic Kellgren-Lawrence Grading of Knee Osteoarthritis</a> (arXiv, 2026)</li>
-          <li><a href="https://arxiv.org/abs/2602.07924">Optimized Human-Robot Co-Dispatch Planning for Petro-Site Surveillance under Varying Criticalities</a> (arXiv, 2026)</li>
-          <li><a href="https://arxiv.org/abs/2409.17054">Using LLM for Real-Time Transcription and Summarization of Doctor-Patient Interactions into ePuskesmas in Indonesia</a> (arXiv, 2024 — best paper presentation, IMMaN 2024)</li>
-          <li><a href="https://dl.acm.org/doi/abs/10.1145/3669828.3669835">Toward an Integrated Decision-Making Framework for Optimized Stroke Diagnosis with DSA and Treatment under Uncertainty</a> (IMIP '24, ACM)</li>
-          <li><a href="https://repository.its.ac.id/99533/">1D-CNN Implementation for Automatic Epilepsy Detection in EEG Signals based on IED</a> (undergraduate thesis, ITS, 2023)</li>
-        </ul>
+          <h2>Contact</h2>
+          <ul class="snapshot-contact">
+            <li><a href="mailto:nurahmadkhatim@gmail.com">nurahmadkhatim@gmail.com</a></li>
+            <li><a href="https://scholar.google.com/citations?user=c9gt1_UAAAAJ">Google Scholar</a></li>
+            <li><a href="https://orcid.org/0009-0008-6939-8121">ORCID</a></li>
+            <li><a href="https://www.linkedin.com/in/nurahmadkhatim">LinkedIn</a></li>
+            <li><a href="https://github.com/naimackerman">GitHub</a></li>
+            <li><a href="https://medium.com/@naimackerman">Medium</a></li>
+          </ul>
 
-        <h2>Elsewhere</h2>
-        <ul>
-          <li><a href="https://scholar.google.com/citations?user=c9gt1_UAAAAJ">Google Scholar</a></li>
-          <li><a href="https://orcid.org/0009-0008-6939-8121">ORCID: 0009-0008-6939-8121</a></li>
-          <li><a href="https://www.linkedin.com/in/nurahmadkhatim">LinkedIn</a></li>
-          <li><a href="https://github.com/naimackerman">GitHub</a></li>
-          <li><a href="https://medium.com/@naimackerman">Medium</a></li>
-          <li><a href="mailto:nurahmadkhatim@gmail.com">nurahmadkhatim@gmail.com</a></li>
-        </ul>
-
-        <noscript><p><em>The interactive book version of this site needs JavaScript; the summary above covers the essentials.</em></p></noscript>
-      </main>
+          <noscript><p class="snapshot-note">The interactive book needs JavaScript; this page covers the essentials.</p></noscript>
+        </main>
+      </div>
     </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

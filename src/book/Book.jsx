@@ -5,11 +5,17 @@ import { castShadow, constrain, foldSheet } from "./fold";
 
 export const BookCtx = createContext({});
 const TURN_MS = 900;
-const CV_URL = new URL("../../CV-Nur Ahmad Khatim.pdf", import.meta.url).href;
+// Opening intro (desktop spread only, every visit): the closed book's hard
+// cover swings open onto the current spread. Keep in step with book.css.
+const INTRO_MS = 1350;
+// The closed book waits ("loading") until fonts and images are in, at least
+// INTRO_MIN_WAIT_MS so it never just flashes, at most INTRO_MAX_WAIT_MS.
+const INTRO_MIN_WAIT_MS = 600;
+const INTRO_MAX_WAIT_MS = 8000;
 
 // ─── Primitives ──────────────────────────────────────────────────────────────
 
-export function Page({ side, num, chapterTitle, runLeft, runRight, children, footnotes }) {
+export function Page({ side, num, chapterTitle, runLeft, runRight, children, footnotes, pinned }) {
   const ctx = useContext(BookCtx);
   num = num ?? (side === "left" ? ctx.leftNum : ctx.rightNum);
   chapterTitle = chapterTitle ?? ctx.chapterTitle;
@@ -33,6 +39,7 @@ export function Page({ side, num, chapterTitle, runLeft, runRight, children, foo
             </ol>
           </div>
         }
+        {pinned && <div className="page-pinned">{pinned}</div>}
         <div className="pagefoot">
           <span>{num}</span>
           <span style={{ fontStyle: "italic", fontSize: 11 }}>{side === "left" ? "verso" : "recto"}</span>
@@ -118,8 +125,17 @@ export function Stamp({ children, rotate = -3, round = false, ink = false, green
 // Chapter scrubber — jump to any chapter from anywhere (replaces the static
 // center label in the nav; current chapter inked in accent).
 function ChapterScrubber({ chapters, currentId, goto }) {
+  const onCover = currentId === "cover";
   return (
     <div className="chapter-scrubber" role="navigation" aria-label="Chapters">
+      <button
+        className={"scrub scrub-cover" + (onCover ? " current" : "")}
+        title="Cover · contents"
+        aria-label="Cover and contents"
+        aria-current={onCover ? "page" : undefined}
+        onClick={() => goto("cover")}>
+        <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 2.5h8a1 1 0 0 1 1 1v10h-8a1 1 0 0 1-1-1z" /><path d="M3.5 12.5a1 1 0 0 1 1-1h8" /><path d="M6 5.5h4" /></svg>
+      </button>
       {chapters.filter((c) => c.roman).map((c) => (
         <button
           key={c.id}
@@ -137,7 +153,9 @@ function ChapterScrubber({ chapters, currentId, goto }) {
 
 // ─── Spread renderer with its own context ───────────────────────────────────
 
-function SpreadFor({ sp, idx, goto, spreadState, updateSpreadState }) {
+// ghost: a copy drawn only for an animation (turning sheet, intro cover). Its
+// forms show the same values but skip side effects like the Turnstile widget.
+function SpreadFor({ sp, idx, goto, spreadState, updateSpreadState, ghost = false }) {
   const Comp = sp.Component;
   const ctxValue = {
     leftNum: idx * 2 + 1,
@@ -146,6 +164,7 @@ function SpreadFor({ sp, idx, goto, spreadState, updateSpreadState }) {
     runLeft: sp.chapter.runLeft,
     runRight: sp.chapter.runRight,
     chapter: sp.chapter,
+    ghost,
     goto,
     spreadData: spreadState[sp.key] || {},
     updateSpreadData: (updates) => updateSpreadState(sp.key, updates),
@@ -234,11 +253,34 @@ function Sheet({ nodes, front, back, wraps }) {
 
 }
 
+// The closed book's hard cover, for the opening intro only. It sits over
+// the right page and swings open about the spine; its inside face is the
+// cover spread's left page, so it lands exactly where the real page is.
+function IntroCover({ back }) {
+  return (
+    <div className="intro-cover" aria-hidden="true">
+      <div className="intro-face intro-front">
+        <div className="intro-front-frame">
+          <div className="intro-front-vol">volume one</div>
+          <div className="intro-front-title">Nur Ahmad<br />Khatim</div>
+          <div className="intro-front-rule" />
+          <div className="intro-front-sub">a brief book about me</div>
+        </div>
+      </div>
+      <div className="intro-face intro-back">{back}</div>
+    </div>);
+
+}
+
 // ─── Book shell ─────────────────────────────────────────────────────────────
 
-export function Book({ chapters }) {
+// forceSingle: show the one-page (tablet) book even on a wide screen.
+// switcher: the view-mode control, shown in the top bar.
+// allowIntro: play the opening intro on load.
+export function Book({ chapters, forceSingle = false, switcher = null, allowIntro = false }) {
   const flat = useFlat(chapters);
-  const isMobile = useIsMobile();
+  const narrow = useIsMobile();
+  const isMobile = narrow || forceSingle;
   const reducedMotion = usePrefersReducedMotion();
   const [spreadState, setSpreadState] = useState({});
   const updateSpreadState = useCallback((key, updates) => {
@@ -253,6 +295,42 @@ export function Book({ chapters }) {
     const i = flat.findIndex((s) => s.key === hash);
     return i >= 0 ? i : 0;
   });
+  // Intro phase: "loading" (closed book, waiting for the page) → "playing" → null.
+  const [introPhase, setIntroPhase] = useState(() => allowIntro && !isMobile && !reducedMotion ? "loading" : null);
+  const intro = introPhase !== null;
+  useEffect(() => {
+    if (introPhase === "loading") {
+      let cancelled = false;
+      const minWait = new Promise((r) => setTimeout(r, INTRO_MIN_WAIT_MS));
+      const pageLoaded = document.readyState === "complete" ?
+      Promise.resolve() :
+      new Promise((r) => window.addEventListener("load", r, { once: true }));
+      const fonts = document.fonts?.ready ?? Promise.resolve();
+      const cap = new Promise((r) => setTimeout(r, INTRO_MAX_WAIT_MS));
+      // Opened in a background tab? Hold the closed book until it's looked at.
+      const seen = () => new Promise((r) => {
+        if (document.visibilityState === "visible") return r();
+        const on = () => {if (document.visibilityState === "visible") {document.removeEventListener("visibilitychange", on);r();}};
+        document.addEventListener("visibilitychange", on);
+      });
+      Promise.race([Promise.all([minWait, pageLoaded, fonts]), cap]).then(seen).then(() => {
+        if (!cancelled) setIntroPhase("playing");
+      });
+      return () => {cancelled = true;};
+    }
+    if (introPhase === "playing") {
+      // Normally ended by the last animation (onAnimationEnd below); this is
+      // only a safety net in case that event never arrives.
+      const t = setTimeout(() => setIntroPhase(null), INTRO_MS + 3000);
+      return () => clearTimeout(t);
+    }
+  }, [introPhase]);
+  const onIntroAnimationEnd = (e) => {
+    if (e.animationName === "intro-chrome-up") setIntroPhase(null);
+  };
+  useEffect(() => {if (isMobile) setIntroPhase(null);}, [isMobile]);
+  const introRef = useRef(intro);
+  introRef.current = intro;
   // Mobile: which page of the spread is showing — "left" or "right"
   const [mPage, setMPage] = useState("left");
   // Active turn: { idx, mPage, dir: "next"|"prev", skip } or null.
@@ -406,7 +484,8 @@ export function Book({ chapters }) {
   // Keyboard
   useEffect(() => {
     const onKey = (e) => {
-      if (e.target.matches("input, textarea")) return;
+      if (e.target.matches("input, textarea") || e.target.closest(".view-switch")) return;
+      if (introRef.current) return; // let the intro finish
       if (e.key === "ArrowRight" || e.key === " ") {e.preventDefault();next();} else
       if (e.key === "ArrowLeft") {e.preventDefault();prev();} else
       if (e.key === "Home") jumpTo(0);else
@@ -426,7 +505,7 @@ export function Book({ chapters }) {
     let g = null;
 
     const down = (e) => {
-      if (turnRef.current || e.button > 0 || e.target.closest(NO_DRAG)) return;
+      if (introRef.current || turnRef.current || e.button > 0 || e.target.closest(NO_DRAG)) return;
       // Only the outer edge of a page is a grip, like a thumb at the fore-edge
       // (on a phone, the left edge pulls the previous page back in).
       const r = el.getBoundingClientRect();
@@ -516,8 +595,8 @@ export function Book({ chapters }) {
   const cur = flat[idx];
   const tgt = turn ? flat[turn.idx] : null;
   const ch = cur.chapter;
-  const spreadOf = (sp, i) =>
-  <SpreadFor sp={sp} idx={i} goto={goto} spreadState={spreadState} updateSpreadState={updateSpreadState} />;
+  const spreadOf = (sp, i, ghost = false) =>
+  <SpreadFor sp={sp} idx={i} goto={goto} spreadState={spreadState} updateSpreadState={updateSpreadState} ghost={ghost} />;
   const cast =
   <div className="fold-cast" ref={castBox}><div className="fold-band shade-cast" ref={castStrip} /></div>;
 
@@ -530,21 +609,22 @@ export function Book({ chapters }) {
         canNext={canNext} canPrev={canPrev}
         chapters={chapters} flat={flat}
         wrapRef={wrapRef} sheetNodes={sheetNodes} cast={cast}
-        spreadOf={spreadOf} />);
+        spreadOf={spreadOf} switcher={switcher} forced={forceSingle && !narrow} />);
 
 
   }
 
   // One page of a spread, cut out for a sheet face
   const half = (sp, i, side) =>
-  <div className="spread sheet-spread" style={{ left: side === "right" ? "calc(-1 * var(--page-w))" : 0 }}>{spreadOf(sp, i)}</div>;
+  <div className="spread sheet-spread" style={{ left: side === "right" ? "calc(-1 * var(--page-w))" : 0 }}>{spreadOf(sp, i, true)}</div>;
 
 
   return (
-    <div className="book-app">
+    <div className={"book-app" + (intro ? ` intro intro-${introPhase}` : "")} aria-busy={intro || undefined} onAnimationEnd={intro ? onIntroAnimationEnd : undefined}>
       <div className="topbar">
-        <span>NURAHMADKHATIM.GITHUB.IO · <a href="#cover-0" onClick={(e) => {e.preventDefault();goto("cover");}}>contents</a> · <a href="#correspondence-0" onClick={(e) => {e.preventDefault();goto("correspondence");}}>say hi</a> · <a className="cv-link" href={CV_URL} target="_blank" rel="noopener noreferrer">cv ↓</a></span>
-        <span>{ch.id !== "cover" ? ch.roman : "—"} &nbsp;·&nbsp; spread {idx + 1} of {flat.length} &nbsp;·&nbsp; <span className="kbd">←</span> <span className="kbd">→</span> &nbsp;or pull a page</span>
+        <span className="topbar-links">NURAHMADKHATIM.GITHUB.IO · <a href="#cover-0" onClick={(e) => {e.preventDefault();goto("cover");}}>contents</a> · <a href="#correspondence-0" onClick={(e) => {e.preventDefault();goto("correspondence");}}>say hi</a></span>
+        <span className="topbar-status">{ch.id !== "cover" ? ch.roman : "—"} &nbsp;·&nbsp; spread {idx + 1} of {flat.length} &nbsp;·&nbsp; <span className="kbd">←</span> <span className="kbd">→</span> &nbsp;or pull a page</span>
+        <span className="topbar-switch">{switcher}</span>
       </div>
 
       <div className={"spread-wrap" + (turn ? " turning" : "")} ref={wrapRef}>
@@ -560,7 +640,7 @@ export function Book({ chapters }) {
         <>
             {/* The page the turning sheet will land on, still showing the CURRENT spread */}
             <div className={`cover-side cover-${turn.dir === "next" ? "left" : "right"}`}>
-              <div className="spread">{spreadOf(cur, idx)}</div>
+              <div className="spread">{spreadOf(cur, idx, true)}</div>
             </div>
 
             {cast}
@@ -574,6 +654,13 @@ export function Book({ chapters }) {
           </>
         }
 
+        {intro &&
+        <>
+            <div className="intro-cast" aria-hidden="true" />
+            <IntroCover back={half(cur, idx, "left")} />
+          </>
+        }
+
         <div className="edge-flip left" onClick={prev} title="previous page (←) — or pull the page" />
         <div className="edge-flip right" onClick={next} title="next page (→) — or pull the page" />
         <div className="page-curl left" />
@@ -583,7 +670,7 @@ export function Book({ chapters }) {
       <div className="book-nav">
         <div><button className="btn" onClick={prev} disabled={!canPrev || !!turn}>← previous</button></div>
         <div className="center">
-          {ch.id === "cover" ? "open the book →" : <ChapterScrubber chapters={chapters} currentId={ch.id} goto={goto} />}
+          <ChapterScrubber chapters={chapters} currentId={ch.id} goto={goto} />
         </div>
         <div className="right"><button className="btn" onClick={next} disabled={!canNext || !!turn}>next →</button></div>
       </div>
@@ -593,22 +680,25 @@ export function Book({ chapters }) {
 
 // ─── Mobile book — one page at a time, hinged on the left like a paperback ──
 
-function MobileBook({ cur, tgt, idx, mPage, turn, next, prev, goto, canNext, canPrev, chapters, flat, wrapRef, sheetNodes, cast, spreadOf }) {
+function MobileBook({ cur, tgt, idx, mPage, turn, next, prev, goto, canNext, canPrev, chapters, flat, wrapRef, sheetNodes, cast, spreadOf, switcher, forced }) {
   const ch = cur.chapter;
-  const page = (sp, i, side) =>
-  <div className="spread mobile-spread" data-show={side}>{spreadOf(sp, i)}</div>;
+  const page = (sp, i, side, ghost) =>
+  <div className="spread mobile-spread" data-show={side}>{spreadOf(sp, i, ghost)}</div>;
 
-  const here = page(cur, idx, mPage);
-  const there = turn && page(tgt, turn.idx, turn.mPage);
+  // The page that lifts away (or the one being laid down) is only animation;
+  // the one underneath is the live page.
+  const here = page(cur, idx, mPage, turn?.dir === "next");
+  const there = turn && page(tgt, turn.idx, turn.mPage, turn.dir === "prev");
   // Turning forward folds the current page off the next; turning back lays the previous page over this one.
   const under = turn?.dir === "next" ? there : here;
   const leaf = turn && (turn.dir === "next" ? here : there);
 
   return (
-    <div className="book-app">
+    <div className={"book-app" + (forced ? " force-single" : "")}>
       <div className="topbar">
-        <span><a href="#cover-0" onClick={(e) => {e.preventDefault();goto("cover");}}>contents</a> · <a href="#correspondence-0" onClick={(e) => {e.preventDefault();goto("correspondence");}}>say hi</a> · <a className="cv-link" href={CV_URL} target="_blank" rel="noopener noreferrer">cv ↓</a></span>
-        <span>{ch.id !== "cover" ? ch.roman : "—"} &nbsp;·&nbsp; {idx + 1}/{flat.length} · {mPage}</span>
+        <span className="topbar-links"><a href="#cover-0" onClick={(e) => {e.preventDefault();goto("cover");}}>contents</a> · <a href="#correspondence-0" onClick={(e) => {e.preventDefault();goto("correspondence");}}>say hi</a></span>
+        <span className="topbar-status">{ch.id !== "cover" ? ch.roman : "—"} &nbsp;·&nbsp; {idx + 1}/{flat.length} · {mPage}</span>
+        <span className="topbar-switch">{switcher}</span>
       </div>
 
       <div className={"spread-wrap mobile" + (turn ? " turning" : "")} ref={wrapRef}>
@@ -626,7 +716,7 @@ function MobileBook({ cur, tgt, idx, mPage, turn, next, prev, goto, canNext, can
       <div className="book-nav">
         <div><button className="btn" onClick={prev} disabled={!canPrev && mPage === "left" || !!turn}>← back</button></div>
         <div className="center">
-          {ch.id === "cover" ? "swipe to turn →" : <ChapterScrubber chapters={chapters} currentId={ch.id} goto={goto} />}
+          <ChapterScrubber chapters={chapters} currentId={ch.id} goto={goto} />
         </div>
         <div className="right"><button className="btn" onClick={next} disabled={!canNext && mPage === "right" || !!turn}>next →</button></div>
       </div>

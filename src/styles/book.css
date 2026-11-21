@@ -2,7 +2,16 @@
  * Sits on top of styles.css (which sets fonts/colors)
  */
 
-html, body { margin: 0; padding: 0; background: var(--bookcase); }
+/* The desk — painted on the page itself (fixed to the window), so it covers the
+   whole viewport even if the book's box ends short of it in some browser. */
+html {
+  background:
+    radial-gradient(ellipse at 50% 60%, rgba(0,0,0,0) 0, rgba(0,0,0,0.55) 90%) fixed,
+    #1f1c17;
+  min-height: 100%;
+}
+html, body { margin: 0; padding: 0; }
+body { background: transparent; }
 
 :root {
   --bookcase: #1f1c17;        /* the desk the book sits on */
@@ -35,9 +44,7 @@ body { font-family: 'Newsreader', 'Source Serif 4', Georgia, serif; }
   align-items: center;
   padding: 12px 24px;
   overflow: hidden;
-  background:
-    radial-gradient(ellipse at 50% 60%, rgba(0,0,0,0) 0, rgba(0,0,0,0.55) 90%),
-    var(--bookcase);
+  background: transparent; /* the desk is on <html> */
   position: relative;
 }
 
@@ -58,8 +65,9 @@ body { font-family: 'Newsreader', 'Source Serif 4', Georgia, serif; }
 .topbar a { color: inherit; text-decoration: none; border-bottom: 1px dotted currentColor; }
 .topbar a:hover { color: var(--accent); border-color: var(--accent); }
 .topbar a.cv-link { color: var(--accent); }
-.topbar > span:first-child { flex-shrink: 0; }
-.topbar > span:last-child {
+.topbar-links { flex-shrink: 0; }
+.topbar-switch { flex-shrink: 0; display: inline-flex; }
+.topbar-status {
   flex: 1 1 auto;
   min-width: 0;
   overflow: hidden;
@@ -816,7 +824,8 @@ body { font-family: 'Newsreader', 'Source Serif 4', Georgia, serif; }
 @media (max-width: 1080px) {
   :root {
     --page-w: min(600px, calc(100vw - 32px));
-    --page-h: calc(100dvh - 84px);
+    /* room for the top bar, the nav and their gaps (≈98px) */
+    --page-h: calc(100dvh - 104px);
   }
   .book-app { padding: 10px 0; }
   .topbar, .book-nav { padding: 0 16px; }
@@ -1280,14 +1289,15 @@ a.gh-card:hover, .gh-card[role="button"]:hover {
   flex-shrink: 0;
   transition: filter 0.25s ease;
 }
-.org-logo-lg {
-  width: 64px;
-  height: 64px;
+.org-logo-md {
+  width: 30px;
+  height: 30px;
 }
-/* hover: reveal the original logo in its true colors */
-.org-logo-lg:hover {
+/* hover or selected: reveal the original logo in its true colors */
+.org-card:hover .org-logo,
+.org-card:focus-visible .org-logo,
+.org-card[aria-pressed="true"] .org-logo {
   filter: none;
-  mix-blend-mode: normal;
 }
 
 /* ── Spiral binding (single-page view at tablet widths) ──
@@ -1295,8 +1305,8 @@ a.gh-card:hover, .gh-card[role="button"]:hover {
    hole, wraps round the page edge and disappears underneath. It sits above
    the turning page, so pages swing off it like a notepad. */
 .spiral-binding { display: none; }
-@media (min-width: 701px) and (max-width: 1080px) {
-  .spiral-binding {
+@media (min-width: 701px) {
+  .spread-wrap.mobile .spiral-binding {
     display: block;
     position: absolute;
     top: 14px;
@@ -1324,4 +1334,525 @@ a.gh-card:hover, .gh-card[role="button"]:hover {
     pointer-events: none;
     z-index: 4;
   }
+}
+
+/* ───────────────────── Pinned page note ───────────────────── */
+/* A note that stays at the foot of the page while the content above scrolls */
+.page-pinned {
+  flex-shrink: 0;
+  position: relative;
+  z-index: 1;
+  padding-top: 10px;
+  margin-top: 4px;
+  border-top: 0.5px dashed rgba(0,0,0,0.14);
+}
+
+/* ───────────────────── Papers list (Chapter III) ───────────────────── */
+/* Each paper is a slip: hover lifts a faint dotted outline and nudges it
+   toward the detail page; the open one keeps a full accent outline. */
+.pub-item {
+  position: relative;
+  padding: 10px 6px 12px;
+  margin: 0 -6px;        /* the outline must stay within .page-content's 8px bleed, or it's clipped */
+  cursor: pointer;
+  border: 1.5px dotted transparent;
+  border-radius: 3px;
+  transition: border-color 0.22s ease, transform 0.22s cubic-bezier(.3,.7,.3,1);
+}
+.pub-item:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  left: 6px;
+  right: 6px;
+  bottom: -6px;
+  border-bottom: 1px dashed rgba(0,0,0,0.22);
+  transition: opacity 0.2s ease;
+}
+.pub-item .publication-title { color: var(--ink); transition: color 0.22s ease, background-size 0.35s ease; }
+.pub-item .pub-year { transition: letter-spacing 0.22s ease; }
+.pub-item:hover,
+.pub-item:focus-visible {
+  border-color: rgba(196,93,58,0.45);
+  transform: translateX(4px);
+}
+.pub-item:hover .publication-title { color: #9c4528; }
+.pub-item:hover .pub-year { letter-spacing: 0.08em; }
+.pub-item:active { transform: translateX(2px); }
+.pub-item[aria-pressed="true"] {
+  border-color: var(--accent);
+  transform: none;
+}
+.pub-item[aria-pressed="true"] .publication-title { color: var(--accent); }
+/* The separators touching an outlined slip step aside */
+.pub-item[aria-pressed="true"]::after,
+.pub-item:has(+ .pub-item[aria-pressed="true"])::after { opacity: 0; }
+.pub-item:focus-visible { outline: none; }
+
+/* Icon links on the paper detail page */
+.pub-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+.pub-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: 1.5px solid var(--ink);
+  border-radius: 3px;
+  color: var(--ink);
+  transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+.pub-action svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.pub-action svg.filled { fill: currentColor; stroke: none; }
+.pub-action:hover {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--paper);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.16);
+}
+.pub-keywords { display: flex; flex-wrap: wrap; gap: 6px; }
+.pub-keyword {
+  font-family: 'Special Elite', monospace;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--ink-soft);
+  padding: 3px 8px;
+  border: 1px dashed var(--ink-soft-2);
+  border-radius: 2px;
+}
+
+/* ───────────────────── Forced single-page (tablet) view on wide screens ───── */
+.book-app.force-single {
+  --page-w: min(600px, calc(100vw - 32px));
+  --page-h: min(900px, calc(100dvh - 104px));
+  padding: 10px 0;
+}
+.book-app.force-single .topbar,
+.book-app.force-single .book-nav { padding: 0 16px; }
+
+/* ───────────────────── View switcher ───────────────────── */
+.topbar-links { display: inline-flex; align-items: center; flex-wrap: nowrap; gap: 0.35em; white-space: nowrap; }
+.view-switch { position: relative; display: inline-flex; }
+.view-switch svg {
+  width: 15px;
+  height: 15px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  flex-shrink: 0;
+}
+.view-switch-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  padding: 3px 10px 3px 8px;
+  font: inherit;
+  letter-spacing: inherit;
+  color: var(--accent);
+  cursor: pointer;
+  transition: background 0.18s ease, color 0.18s ease;
+}
+.view-switch-btn:hover,
+.view-switch-btn[aria-expanded="true"] { background: rgba(196,93,58,0.14); }
+.view-switch-caret { font-size: 10px; opacity: 0.8; }
+.view-switch-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 100;
+  min-width: 230px;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  background: var(--paper);
+  color: var(--ink);
+  border: 1px solid rgba(0,0,0,0.18);
+  border-radius: 8px;
+  box-shadow: 0 14px 34px rgba(0,0,0,0.35);
+  font-family: 'Newsreader', serif;
+  letter-spacing: 0;
+  animation: view-menu-in 0.16s ease both;
+}
+.view-switch-light .view-switch-menu { box-shadow: 0 12px 30px rgba(26,22,18,0.16); }
+@keyframes view-menu-in { from { opacity: 0; transform: translateY(-4px); } }
+.view-switch-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 44px;
+  padding: 7px 10px;
+  background: none;
+  border: none;
+  border-radius: 6px;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+.view-switch-item:hover { background: var(--accent-soft); }
+.view-switch-item[aria-checked="true"] { color: var(--accent); }
+.view-switch-item svg { width: 20px; height: 20px; }
+.view-switch-text { display: flex; flex-direction: column; line-height: 1.25; flex: 1; }
+.view-switch-text strong { font-weight: 600; font-size: 14px; }
+.view-switch-text small { font-size: 12px; font-style: italic; color: var(--mute-strong); }
+.view-switch-check { font-size: 13px; }
+/* On the profile page's light header */
+.view-switch-light { font-family: 'Newsreader', serif; font-size: 14px; }
+.view-switch-light .view-switch-btn { color: var(--ink); border-color: rgba(26,22,18,0.25); padding: 6px 12px 6px 10px; }
+.view-switch-light .view-switch-btn:hover,
+.view-switch-light .view-switch-btn[aria-expanded="true"] { color: var(--accent); border-color: var(--accent); background: var(--accent-soft); }
+
+@media (max-width: 700px) {
+  .topbar { font-size: 11px; }
+  .view-switch-btn { padding: 2px 8px 2px 6px; }
+}
+
+/* ───────────────────── Opening intro (desktop) ───────────────────── */
+/* Two phases, set by Book.jsx:
+   .intro-loading — the closed book sits full size, centred on the desk, a gold
+                    sheen sweeping its cover, until fonts and images are in.
+   .intro-playing — the cover swings open about the spine while the book slides
+                    to centre, then the chrome fades in. No zoom.
+   Playing lasts ≈ 1.3s — keep INTRO_MS in Book.jsx in step. */
+.book-app.intro .spread-wrap {
+  pointer-events: none;
+  perspective: 2600px;
+  /* the closed cover is the right half of the spread: shift it to the centre */
+  transform: translateX(calc(var(--page-w) * -0.5));
+}
+.book-app.intro-loading .spread-wrap { animation: intro-arrive 0.5s ease-out both; }
+@keyframes intro-arrive { from { opacity: 0; transform: translateX(calc(var(--page-w) * -0.5)) translateY(12px); } }
+/* slides to centre in step with the cover opening */
+.book-app.intro-playing .spread-wrap { animation: intro-book 0.87s cubic-bezier(.55,0,.3,1) both; }
+@keyframes intro-book {
+  from { transform: translateX(calc(var(--page-w) * -0.5)); }
+  to   { transform: none; }
+}
+.book-app.intro .page-curl { opacity: 0; }
+.book-app.intro .topbar,
+.book-app.intro .book-nav { opacity: 0; }
+.book-app.intro-playing .topbar,
+.book-app.intro-playing .book-nav { animation: intro-chrome 0.45s 0.85s cubic-bezier(.2,.7,.3,1) both; }
+@keyframes intro-chrome { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+.book-app.intro-playing .book-nav { animation-name: intro-chrome-up; }
+@keyframes intro-chrome-up { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+/* Gutter shading: the spine shadow comes up as soon as the cover lifts, so the
+   join between the pages is shaded throughout the opening, not popped in at the end. */
+.book-app.intro .spine-shadow { opacity: 0; }
+.book-app.intro-playing .spine-shadow { animation: intro-fade-in 0.45s 0.03s ease-out both; }
+@keyframes intro-fade-in { from { opacity: 0; } to { opacity: 1; } }
+/* The left page stays hidden until the cover has landed exactly on top of it —
+   mid-turn, perspective foreshortens the cover, so a page shown earlier would
+   peek out beside it. The cover's inside carries the same drop shadow, so the
+   swap is invisible. */
+.book-app.intro .spread.base .page.left { opacity: 0; }
+.book-app.intro-playing .spread.base .page.left { animation: intro-fade-in 1ms 0.88s both; }
+
+/* Shadow the lifting cover throws across the right page, deepest at the spine */
+.intro-cast {
+  position: absolute;
+  top: 0;
+  left: var(--page-w);
+  width: var(--page-w);
+  height: 100%;
+  z-index: 8;
+  pointer-events: none;
+  background: linear-gradient(to right, rgba(0,0,0,0.34), rgba(0,0,0,0.12) 35%, rgba(0,0,0,0) 80%);
+  opacity: 0;
+}
+.book-app.intro-playing .intro-cast { animation: intro-cast 0.87s 0s ease-in-out both; }
+@keyframes intro-cast {
+  0%   { opacity: 0; }
+  10%  { opacity: 0.55; }
+  45%  { opacity: 0.85; }
+  100% { opacity: 0; }
+}
+
+.intro-cover {
+  position: absolute;
+  top: 0;
+  left: var(--page-w);
+  width: var(--page-w);
+  height: 100%;
+  z-index: 30;
+  pointer-events: none;
+  transform-origin: 0 50%;
+  transform-style: preserve-3d;
+}
+.book-app.intro-playing .intro-cover { animation: intro-open 0.87s 0s cubic-bezier(.6,.02,.3,1) both; }
+@keyframes intro-open {
+  from { transform: rotateY(0deg); }
+  to   { transform: rotateY(-180deg); }
+}
+.intro-face {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+.intro-front {
+  inset: -7px -9px -7px 0;
+  border-radius: 2px 7px 7px 2px;
+  background:
+    linear-gradient(90deg, rgba(0,0,0,0.38) 0, rgba(0,0,0,0.1) 14px, rgba(255,255,255,0.07) 18px, rgba(0,0,0,0) 30px),
+    radial-gradient(ellipse at 30% 20%, rgba(255,235,200,0.12), transparent 60%),
+    repeating-linear-gradient(45deg, rgba(255,255,255,0.025) 0 2px, rgba(0,0,0,0.03) 2px 4px),
+    #6f3f24;
+  box-shadow: 10px 30px 50px rgba(0,0,0,0.55), inset 0 0 0 1px rgba(0,0,0,0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #e3c58a;
+  overflow: hidden;
+}
+/* Waiting: a slow gold sheen across the cloth */
+.intro-front::before {
+  content: "";
+  position: absolute;
+  inset: -20% -60%;
+  background: linear-gradient(105deg, transparent 40%, rgba(255,226,170,0.16) 50%, transparent 60%);
+  transform: translateX(-60%);
+  pointer-events: none;
+  z-index: 1;
+}
+.book-app.intro-loading .intro-front::before { animation: intro-sheen 2.2s 0.4s ease-in-out infinite; }
+@keyframes intro-sheen { from { transform: translateX(-60%); } to { transform: translateX(60%); } }
+/* Turning away from the light, the cover darkens */
+.intro-front::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: #000;
+  opacity: 0;
+  z-index: 2;
+}
+.book-app.intro-playing .intro-front::after { animation: intro-front-shade 0.44s 0s ease-in both; }
+@keyframes intro-front-shade { to { opacity: 0.45; } }
+.intro-front-frame {
+  position: absolute;
+  inset: 34px 30px 34px 44px;
+  border: 1.5px solid rgba(227,197,138,0.75);
+  outline: 1px solid rgba(227,197,138,0.35);
+  outline-offset: 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 14px;
+  padding: 24px;
+}
+.intro-front-vol {
+  font-family: 'Special Elite', monospace;
+  font-size: 12px;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  opacity: 0.85;
+}
+.intro-front-title {
+  font-family: 'Newsreader', serif;
+  font-weight: 600;
+  font-size: clamp(40px, 5vw, 64px);
+  line-height: 0.95;
+  letter-spacing: -0.02em;
+  text-shadow: 0 1px 0 rgba(0,0,0,0.35), 0 -1px 0 rgba(255,240,200,0.15);
+}
+.intro-front-rule { width: 64px; height: 1.5px; background: currentColor; opacity: 0.7; }
+.intro-front-sub { font-family: 'Newsreader', serif; font-style: italic; font-size: 17px; opacity: 0.85; }
+
+/* The inside of the cover is the spread's left page, mirrored back. It sits
+   above the spine shadow, so it carries its own half of the gutter (same ramp
+   as .spine-shadow / .back-gutter) and starts dim, brightening as it lands. */
+.intro-back {
+  transform: rotateY(180deg);
+  overflow: hidden;
+  background: var(--paper);
+  /* same drop shadow as .page.left, kept off the right page like the spread's */
+  box-shadow: -6px 28px 40px rgba(0,0,0,0.42);
+  clip-path: inset(-80px 0 -80px -80px);
+}
+.intro-back .page { box-shadow: none !important; }
+.intro-back::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  width: 55px;
+  z-index: 3;
+  pointer-events: none;
+  background:
+    linear-gradient(to left, rgba(0,0,0,0.18) 0 0.5px, transparent 0.5px),
+    linear-gradient(to left, rgba(0,0,0,0.26) 0, rgba(0,0,0,0.14) 13.2px, rgba(0,0,0,0.05) 33px, transparent 55px);
+}
+.intro-back::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  pointer-events: none;
+  background: linear-gradient(to left, rgba(0,0,0,0.5), rgba(0,0,0,0.25));
+  opacity: 0;
+}
+.book-app.intro-playing .intro-back::before { animation: intro-back-light 0.44s 0.43s ease-out both; }
+@keyframes intro-back-light { from { opacity: 0.6; } to { opacity: 0; } }
+
+/* Cover button at the head of the chapter scrubber */
+.chapter-scrubber .scrub-cover { display: inline-flex; align-items: center; justify-content: center; }
+.chapter-scrubber .scrub-cover svg {
+  width: 14px;
+  height: 14px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+@media (max-width: 700px) {
+  .chapter-scrubber .scrub-cover svg { width: 12px; height: 12px; }
+}
+
+/* ─── Guestbook loading ─── */
+.guest-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 17px;
+  color: var(--ink-soft);
+}
+.guest-spinner {
+  width: 14px;
+  height: 14px;
+  border: 1.6px solid rgba(196,93,58,0.25);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: guest-spin 0.8s linear infinite;
+  flex-shrink: 0;
+}
+@keyframes guest-spin { to { transform: rotate(360deg); } }
+.guest-retry {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  color: var(--accent);
+  text-decoration: underline;
+  text-decoration-style: wavy;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+.guest-skeleton { display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
+.guest-skeleton:hover { transform: none !important; border-color: rgba(0,0,0,0.18); box-shadow: none; }
+.skel {
+  display: block;
+  height: 10px;
+  border-radius: 3px;
+  background: linear-gradient(90deg, rgba(0,0,0,0.06) 0, rgba(0,0,0,0.12) 40%, rgba(0,0,0,0.06) 80%) 0 0 / 200% 100%;
+  animation: skel-shimmer 1.4s ease-in-out infinite;
+}
+.skel-name { width: 38%; height: 16px; }
+.skel-line { width: 92%; }
+.skel-line.short { width: 64%; }
+.skel-meta { width: 30%; height: 8px; margin-top: 2px; }
+@keyframes skel-shimmer { from { background-position: 100% 0; } to { background-position: -100% 0; } }
+
+/* ───────────────────── CV modal ───────────────────── */
+.cv-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(14,12,9,0.72);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  animation: cv-fade 0.2s ease-out both;
+}
+@keyframes cv-fade { from { opacity: 0; } }
+.cv-modal-dialog {
+  display: flex;
+  flex-direction: column;
+  width: min(920px, 100%);
+  height: min(1100px, calc(100dvh - 48px));
+  background: var(--paper);
+  border-radius: 4px;
+  box-shadow: 0 30px 80px rgba(0,0,0,0.55);
+  overflow: hidden;
+  animation: cv-rise 0.26s cubic-bezier(.2,.8,.3,1) both;
+}
+@keyframes cv-rise { from { opacity: 0; transform: translateY(14px) scale(0.98); } }
+.cv-modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 14px 12px 22px;
+  border-bottom: 1px solid rgba(0,0,0,0.12);
+  flex-shrink: 0;
+}
+.cv-modal-kicker {
+  font-family: 'Special Elite', monospace;
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+.cv-modal-head h2 {
+  margin: 2px 0 0;
+  font-family: 'Newsreader', serif;
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--ink);
+  line-height: 1.1;
+}
+.cv-modal-actions { display: flex; gap: 6px; }
+.cv-modal-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 1.5px solid var(--ink);
+  border-radius: 3px;
+  background: transparent;
+  color: var(--ink);
+  cursor: pointer;
+  transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease;
+}
+.cv-modal-icon:hover { background: var(--accent); border-color: var(--accent); color: var(--paper); }
+.cv-modal-icon svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.cv-modal-body { flex: 1; min-height: 0; background: #e8e1d3; }
+.cv-modal-frame { display: block; width: 100%; height: 100%; border: 0; }
+.cv-modal-fallback {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 24px;
+  text-align: center;
+  font-family: 'Newsreader', serif;
+  font-style: italic;
+  color: var(--ink-soft);
+}
+.cv-modal-fallback p { margin: 0; }
+.cv-modal-fallback-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+.cv-modal-fallback-actions .btn-ink { text-decoration: none; display: inline-flex; align-items: center; min-height: 40px; }
+@media (max-width: 700px) {
+  .cv-modal { padding: 0; }
+  .cv-modal-dialog { width: 100%; height: 100dvh; border-radius: 0; }
+  .cv-modal-head { padding: 10px 12px 10px 16px; }
+  .cv-modal-head h2 { font-size: 18px; }
 }

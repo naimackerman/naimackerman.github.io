@@ -1,0 +1,398 @@
+/* — Profile view: a plain one-page take on the same content — */
+
+html[data-view="profile"] { background: #f6f0e4; }
+
+.pf-root {
+  --pf-bg: #f6f0e4;
+  --pf-card: #fffaf1;
+  --pf-line: rgba(26, 22, 18, 0.12);
+  --pf-line-strong: rgba(26, 22, 18, 0.22);
+  --pf-header-h: 60px;
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: var(--pf-bg);
+  color: var(--ink);
+  font-family: 'Newsreader', 'Source Serif 4', Georgia, serif;
+  font-size: 16px;
+  line-height: 1.6;
+  overflow-x: clip;
+}
+.pf-root a { color: inherit; }
+
+/* — Header — */
+.pf-header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: rgba(246, 240, 228, 0.92);
+  backdrop-filter: saturate(1.2) blur(8px);
+  -webkit-backdrop-filter: saturate(1.2) blur(8px);
+  border-bottom: 1px solid var(--pf-line);
+}
+.pf-header-inner {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 0 16px;
+  min-height: var(--pf-header-h);
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+.pf-wordmark {
+  font-weight: 600;
+  font-size: 19px;
+  letter-spacing: -0.01em;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.pf-accent { color: var(--accent); }
+.pf-nav {
+  display: flex;
+  gap: 4px;
+  margin-left: auto;
+  min-width: 0;
+}
+.pf-nav a {
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 15px;
+  color: var(--ink-soft);
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background 0.18s ease, color 0.18s ease;
+}
+.pf-nav a:hover { background: var(--accent-soft); color: var(--accent); }
+.pf-nav a.active { color: var(--accent); background: var(--accent-soft); }
+.pf-header-switch { flex-shrink: 0; }
+
+/* — Layout — */
+.pf-layout {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 32px 16px 48px;
+  display: grid;
+  grid-template-columns: 300px minmax(0, 1fr);
+  gap: 40px;
+  align-items: start;
+}
+
+/* — Identity card — */
+.pf-card {
+  position: sticky;
+  top: calc(var(--pf-header-h) + 24px);
+  background: var(--pf-card);
+  border: 1px solid var(--pf-line);
+  border-radius: 10px;
+  padding: 24px;
+  box-shadow: 0 1px 2px rgba(26, 22, 18, 0.04), 0 8px 24px rgba(26, 22, 18, 0.05);
+}
+.pf-photo {
+  display: block;
+  width: 132px;
+  height: 152px;
+  object-fit: cover;
+  border-radius: 8px;
+  filter: grayscale(0.35) contrast(1.03);
+  background: var(--paper-2);
+}
+.pf-card-body { margin-top: 16px; min-width: 0; }
+.pf-name { font-size: 26px; font-weight: 600; line-height: 1.1; letter-spacing: -0.015em; margin: 0; }
+.pf-aka { font-family: 'Caveat', cursive; font-size: 19px; color: var(--ink-soft-2); margin-top: 2px; }
+.pf-role { margin: 8px 0 0; font-style: italic; color: var(--ink-soft); }
+.pf-affil {
+  list-style: none;
+  padding: 0;
+  margin: 12px 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--ink-soft);
+}
+.pf-affil strong { color: var(--ink); font-weight: 600; }
+.pf-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+.pf-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 38px;
+  padding: 8px 16px;
+  border: 1.5px solid var(--ink);
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease;
+}
+.pf-btn:hover { border-color: var(--accent); color: var(--accent); }
+.pf-root .pf-btn-solid { background: var(--ink); color: var(--paper); }
+.pf-root .pf-btn-solid:hover { background: var(--accent); border-color: var(--accent); color: #fff; }
+.pf-links { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 16px; }
+.pf-links a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  border: 1px solid var(--pf-line);
+  color: var(--ink-soft);
+  transition: color 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+}
+.pf-links a:hover { color: var(--accent); border-color: var(--accent); background: var(--accent-soft); }
+.pf-interests { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--pf-line); }
+.pf-label {
+  font-size: 12px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--mute-strong);
+  margin-bottom: 8px;
+}
+.pf-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.pf-chip {
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: #8f3e22;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.pf-chip-sm { font-size: 12px; padding: 2px 8px; }
+
+/* — Main column — */
+.pf-main { min-width: 0; }
+.pf-section { scroll-margin-top: calc(var(--pf-header-h) + 16px); padding-bottom: 36px; }
+.pf-section + .pf-section { padding-top: 32px; border-top: 1px solid var(--pf-line); }
+.pf-section-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px 16px;
+  margin-bottom: 16px;
+}
+.pf-section h2 { margin: 0; font-size: 28px; font-weight: 600; letter-spacing: -0.015em; line-height: 1.15; }
+.pf-section p { margin: 0 0 12px; color: var(--ink-soft); max-width: 68ch; }
+
+.pf-stats { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 14px; color: var(--mute-strong); }
+.pf-stats strong { color: var(--ink); font-weight: 600; }
+.pf-stats a { color: var(--accent); text-decoration: none; }
+.pf-stats a:hover { text-decoration: underline; }
+
+/* Publications */
+.pf-pubs { list-style: none; margin: 0; padding: 0; }
+.pf-pub {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 16px;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--pf-line);
+}
+.pf-pub:first-child { padding-top: 4px; }
+.pf-pub-title {
+  font-size: 17px;
+  font-weight: 500;
+  line-height: 1.35;
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+.pf-pub-title:hover { color: var(--accent); text-decoration: underline; text-underline-offset: 3px; }
+.pf-badge {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 0 7px;
+  border: 1px solid var(--accent);
+  border-radius: 4px;
+  color: var(--accent);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  vertical-align: 2px;
+}
+.pf-pub-authors { font-size: 14px; color: var(--ink-soft); margin-top: 4px; }
+.pf-pub-authors strong { color: var(--ink); }
+.pf-pub-venue { font-size: 14px; color: var(--mute-strong); font-style: italic; }
+.pf-pub-side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  font-size: 14px;
+  white-space: nowrap;
+}
+.pf-pub-year { font-weight: 600; }
+.pf-pub-cites { color: var(--mute-strong); font-size: 13px; }
+.pf-pub-more { margin-top: 6px; }
+.pf-pub-more summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--accent);
+  list-style: none;
+  padding: 4px 0;
+}
+.pf-pub-more summary::-webkit-details-marker { display: none; }
+.pf-pub-more summary::before { content: "+"; font-weight: 600; width: 10px; }
+.pf-pub-more[open] summary::before { content: "–"; }
+.pf-pub-more p { font-size: 15px; margin: 6px 0 10px; }
+
+/* Experience */
+.pf-exp { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 22px; }
+.pf-org { display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 16px; }
+.pf-org-logo {
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
+  border-radius: 8px;
+  background: #fff;
+  border: 1px solid var(--pf-line);
+  padding: 5px;
+}
+.pf-org-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; }
+.pf-org-head h3 { margin: 0; font-size: 19px; font-weight: 600; line-height: 1.25; }
+.pf-org-type {
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--mute-strong);
+}
+.pf-org-where { font-size: 14px; color: var(--mute-strong); }
+.pf-pos { margin-top: 10px; padding-left: 14px; border-left: 2px solid var(--pf-line-strong); }
+.pf-pos-head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 2px 12px; font-size: 15px; }
+.pf-pos-head span { color: var(--accent); font-size: 13px; white-space: nowrap; }
+.pf-root .pf-pos p { font-size: 15px; margin: 4px 0 0; }
+
+/* Honors */
+.pf-honors { list-style: none; margin: 0; padding: 0; }
+.pf-honors li {
+  display: grid;
+  grid-template-columns: 150px minmax(0, 1fr);
+  gap: 16px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--pf-line);
+}
+.pf-honor-year { font-size: 14px; color: var(--mute-strong); white-space: nowrap; }
+.pf-honor-title { font-weight: 500; }
+.pf-honor-org { font-size: 14px; font-style: italic; color: var(--ink-soft); }
+
+/* Contact */
+.pf-contact { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 24px; margin-top: 8px; }
+.pf-socials { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; align-content: start; }
+.pf-social {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--pf-line);
+  border-radius: 8px;
+  background: var(--pf-card);
+  text-decoration: none;
+  transition: border-color 0.18s ease, background 0.18s ease;
+}
+.pf-social:hover { border-color: var(--accent); background: #fff; }
+.pf-social-icon {
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  background: var(--ink);
+  color: var(--paper);
+}
+.pf-social:hover .pf-social-icon { background: var(--accent); }
+.pf-social-text { min-width: 0; display: flex; flex-direction: column; line-height: 1.3; }
+.pf-social-text strong { font-weight: 600; font-size: 15px; }
+.pf-social-text small { font-size: 13px; color: var(--mute-strong); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pf-form {
+  padding: 18px;
+  border: 1px solid var(--pf-line);
+  border-radius: 10px;
+  background: var(--pf-card);
+  min-width: 0;
+}
+.pf-form .turnstile-wrap::before { background: var(--pf-card); }
+
+.pf-footer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px 16px;
+  padding-top: 24px;
+  border-top: 1px solid var(--pf-line);
+  font-size: 14px;
+  color: var(--mute-strong);
+}
+.pf-linkbtn {
+  background: none;
+  border: none;
+  padding: 6px 0;
+  font: inherit;
+  color: var(--accent);
+  cursor: pointer;
+}
+.pf-linkbtn:hover { text-decoration: underline; text-underline-offset: 3px; }
+
+/* — Responsive — */
+@media (max-width: 960px) {
+  .pf-layout { grid-template-columns: minmax(0, 1fr); gap: 32px; padding-top: 20px; }
+  .pf-card {
+    position: static;
+    display: grid;
+    grid-template-columns: 132px minmax(0, 1fr);
+    gap: 20px;
+    align-items: start;
+  }
+  .pf-card-body { margin-top: 0; }
+  /* Two rows: name + display switch, then a scrollable tab strip */
+  .pf-header-inner { flex-wrap: wrap; column-gap: 12px; row-gap: 0; min-height: 0; }
+  .pf-wordmark { padding: 12px 0; }
+  .pf-header-switch { margin-left: auto; }
+  .pf-nav {
+    order: 3;
+    flex: 1 0 100%;
+    gap: 22px;
+    margin: 0 -16px;
+    padding: 0 16px;
+    border-top: 1px solid var(--pf-line);
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .pf-nav::-webkit-scrollbar { display: none; }
+  .pf-nav a {
+    padding: 10px 0 8px;
+    border-radius: 0;
+    font-size: 15px;
+    border-bottom: 2px solid transparent;
+  }
+  .pf-nav a:hover { background: none; }
+  .pf-nav a.active { background: none; border-bottom-color: var(--accent); }
+  .pf-root { --pf-header-h: 98px; }
+}
+
+@media (max-width: 640px) {
+  .pf-root { font-size: 15.5px; }
+  .view-switch-light { font-size: 13.5px; }
+  .view-switch-light .view-switch-btn { padding: 5px 10px 5px 8px; }
+  .pf-card { grid-template-columns: minmax(0, 1fr); padding: 20px; }
+  .pf-photo { width: 104px; height: 120px; }
+  .pf-wordmark { font-size: 17px; }
+  .pf-section h2 { font-size: 24px; }
+  .pf-pub { grid-template-columns: minmax(0, 1fr); gap: 4px; }
+  .pf-pub-side { flex-direction: row; align-items: baseline; gap: 10px; order: -1; }
+  .pf-honors li { grid-template-columns: minmax(0, 1fr); gap: 2px; }
+  .pf-contact { grid-template-columns: minmax(0, 1fr); }
+  .pf-org { grid-template-columns: 36px minmax(0, 1fr); gap: 12px; }
+  .pf-org-logo { width: 36px; height: 36px; padding: 4px; }
+}
+
+@media (max-width: 340px) {
+  .pf-wordmark { font-size: 15px; }
+  .view-switch-btn span:not(.view-switch-caret) { display: none; }
+}
